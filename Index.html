@@ -1,0 +1,2538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0f1923">
+<meta name="description" content="EscolApp - Gestiona tus tareas escolares fácilmente">
+<title>EscolApp 🎒</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+
+<style>
+/* ============================================================
+   VARIABLES & RESET
+============================================================ */
+:root {
+  --bg: #0f1923;
+  --bg2: #162030;
+  --bg3: #1d2c3f;
+  --surface: #1a2535;
+  --surface2: #223045;
+  --border: rgba(255,255,255,0.08);
+  --accent: #3d9fff;
+  --accent2: #00e5a0;
+  --accent3: #ff6b6b;
+  --accent4: #f7b731;
+  --accent5: #b06eff;
+  --text: #e8edf4;
+  --text2: #8a9bb0;
+  --text3: #4a5f78;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --nav-h: 64px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  height: 100%; overflow: hidden;
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+  touch-action: manipulation;
+}
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column;
+  height: 100dvh;
+}
+
+/* ============================================================
+   SPLASH
+============================================================ */
+#splash {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 14px;
+  transition: opacity 0.5s ease;
+}
+#splash.hide { opacity: 0; pointer-events: none; }
+.splash-icon {
+  width: 88px; height: 88px;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  border-radius: 24px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 40px;
+  box-shadow: 0 0 48px rgba(61,159,255,0.45);
+  animation: splashPulse 2s ease-in-out infinite;
+}
+@keyframes splashPulse {
+  0%,100% { box-shadow: 0 0 48px rgba(61,159,255,0.45); }
+  50% { box-shadow: 0 0 72px rgba(0,229,160,0.6); }
+}
+.splash-title { font-family:'Syne',sans-serif; font-size:28px; font-weight:800; }
+.splash-sub { color:var(--text2); font-size:13px; }
+.splash-bar { width:140px; height:3px; background:var(--bg3); border-radius:99px; overflow:hidden; margin-top:6px; }
+.splash-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); animation:loadBar 2s ease forwards; }
+@keyframes loadBar { from{width:0} to{width:100%} }
+
+/* ============================================================
+   SETUP WIZARD
+============================================================ */
+#setupWizard {
+  position: fixed; inset: 0; z-index: 999;
+  background: var(--bg);
+  display: none;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+}
+#setupWizard.visible { display: flex; }
+.wizard-header {
+  text-align: center; margin-bottom: 28px;
+}
+.wizard-logo {
+  width: 72px; height: 72px;
+  background: linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius: 20px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 34px; margin: 0 auto 14px;
+}
+.wizard-title { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; margin-bottom:6px; }
+.wizard-sub { color:var(--text2); font-size:14px; line-height:1.6; }
+.wizard-steps {
+  display: flex; gap: 6px; justify-content: center; margin-bottom: 24px;
+}
+.wizard-step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--bg3); transition: all 0.3s;
+}
+.wizard-step-dot.active { background: var(--accent); width: 24px; border-radius: 4px; }
+.wizard-step-dot.done { background: var(--accent2); }
+.wizard-panel { display: none; }
+.wizard-panel.active { display: block; }
+.wizard-step-title {
+  font-family:'Syne',sans-serif; font-size:17px; font-weight:700;
+  margin-bottom: 6px; display: flex; align-items: center; gap: 10px;
+}
+.wizard-step-num {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--accent); color: white;
+  font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.wizard-desc { font-size:13px; color:var(--text2); line-height:1.6; margin-bottom:14px; }
+.wizard-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--accent); font-size: 13px; font-weight: 600;
+  text-decoration: none; margin-bottom: 14px;
+}
+.wizard-code-block {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px; font-size: 12px;
+  color: var(--accent2); font-family: monospace;
+  margin-bottom: 14px; line-height: 1.7;
+  word-break: break-all;
+}
+.wizard-nav { display: flex; gap: 10px; margin-top: 20px; }
+.wizard-nav .btn { flex: 1; }
+
+/* ============================================================
+   APP LAYOUT
+============================================================ */
+#app {
+  display: flex; flex-direction: column;
+  height: 100dvh;
+  padding-top: var(--safe-top);
+}
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0; min-height: 54px;
+  gap: 10px;
+}
+.header-left { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.header-logo {
+  width: 32px; height: 32px; flex-shrink: 0;
+  background: linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center; font-size: 16px;
+}
+.header-title {
+  font-family:'Syne',sans-serif; font-size:16px; font-weight:800;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.header-sub { font-size:11px; color:var(--text2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.header-right { display: flex; gap: 7px; flex-shrink: 0; }
+.icon-btn {
+  width: 34px; height: 34px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 15px;
+  transition: background 0.15s;
+  position: relative;
+}
+.icon-btn:active { background: var(--surface2); }
+.badge-dot {
+  position: absolute; top: -3px; right: -3px;
+  width: 9px; height: 9px;
+  background: var(--accent3); border-radius: 50%;
+  border: 2px solid var(--bg);
+  display: none;
+}
+.badge-dot.show { display: block; }
+
+#main { flex: 1; overflow: hidden; position: relative; }
+.screen { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; display:none; }
+.screen.active { display:block; }
+
+/* ============================================================
+   BOTTOM NAV
+============================================================ */
+.bottom-nav {
+  display: flex;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+}
+.nav-item {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 3px;
+  cursor: pointer; color: var(--text3);
+  font-size: 9.5px; font-weight: 500;
+  padding: 8px 2px; user-select: none;
+  transition: color 0.15s;
+  position: relative;
+}
+.nav-item .ni { font-size: 20px; line-height: 1; }
+.nav-item.active { color: var(--accent); }
+.nav-item:active { opacity: 0.6; }
+.nav-badge {
+  position: absolute; top: 6px; right: calc(50% - 16px);
+  background: var(--accent3); color: white;
+  font-size: 8px; font-weight: 700;
+  min-width: 14px; height: 14px;
+  border-radius: 99px; display: none;
+  align-items: center; justify-content: center;
+  padding: 0 3px; border: 2px solid var(--bg2);
+}
+.nav-badge.show { display: flex; }
+
+/* ============================================================
+   BOTONES
+============================================================ */
+.btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; padding: 13px;
+  border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  cursor: pointer; border: none;
+  font-family:'DM Sans',sans-serif;
+  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.btn:active { transform: scale(0.97); }
+.btn-primary { background: var(--accent); color: white; }
+.btn-success { background: rgba(0,229,160,0.15); color: var(--accent2); border: 1px solid rgba(0,229,160,0.3); }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+.btn-danger { background: rgba(255,107,107,0.12); color: var(--accent3); border: 1px solid rgba(255,107,107,0.25); }
+.btn-warning { background: rgba(247,183,49,0.12); color: var(--accent4); border: 1px solid rgba(247,183,49,0.25); }
+.btn-sm { padding: 9px 14px; font-size: 13px; width: auto; }
+.btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+
+/* ============================================================
+   FORMS
+============================================================ */
+.form-group { margin-bottom: 14px; }
+.form-label {
+  display: block; font-size: 11px; font-weight: 600;
+  color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.form-input {
+  width: 100%; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 11px 13px; color: var(--text); font-size: 14px;
+  font-family:'DM Sans',sans-serif;
+  transition: border-color 0.15s;
+}
+.form-input:focus { outline: none; border-color: var(--accent); }
+.form-input::placeholder { color: var(--text3); }
+.form-input[type=password] { letter-spacing: 2px; }
+.form-input[type=password]::placeholder { letter-spacing: normal; }
+textarea.form-input { resize: vertical; min-height: 76px; }
+.form-select {
+  width: 100%; background: var(--bg);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 11px 36px 11px 13px; color: var(--text); font-size: 14px;
+  font-family:'DM Sans',sans-serif; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238a9bb0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 13px center;
+}
+.form-select:focus { outline: none; border-color: var(--accent); }
+.form-hint { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* ============================================================
+   CARDS / SURFACES
+============================================================ */
+.card-surface {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.section-pad { padding: 16px 16px 0; }
+.section-title {
+  font-family:'Syne',sans-serif; font-size:20px; font-weight:800;
+  padding: 16px 16px 4px;
+}
+.section-sub { font-size:13px; color:var(--text2); padding: 0 16px 14px; line-height:1.5; }
+.divider { border:none; border-top:1px solid var(--border); }
+
+/* ============================================================
+   TABLEROS / BOARDS SCREEN
+============================================================ */
+.boards-container { padding: 12px 14px 80px; }
+.board-item {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 16px;
+  margin-bottom: 11px; cursor: pointer;
+  display: flex; align-items: center; gap: 14px;
+  transition: border-color 0.15s, transform 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.board-item:active { transform: scale(0.98); border-color: var(--accent); }
+.board-avatar {
+  width: 50px; height: 50px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 24px; flex-shrink: 0;
+}
+.board-info { flex: 1; min-width: 0; }
+.board-name { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; margin-bottom:2px; }
+.board-meta { font-size:11px; color:var(--text2); display:flex; gap:10px; flex-wrap:wrap; margin-top:4px; }
+.board-meta-item { display:flex; align-items:center; gap:3px; }
+.board-arrow { color:var(--text3); font-size:18px; flex-shrink:0; }
+.board-tag {
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 2px 8px; border-radius: 99px; display: inline-block; margin-bottom: 4px;
+}
+.board-tag.escolar { background: rgba(61,159,255,0.15); color: var(--accent); }
+.board-tag.libre { background: rgba(176,110,255,0.15); color: var(--accent5); }
+.add-board-btn {
+  width: 100%; padding: 16px;
+  border: 2px dashed var(--border); border-radius: var(--radius);
+  background: transparent; color: var(--text2);
+  font-size: 14px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  font-family:'DM Sans',sans-serif;
+  transition: border-color 0.15s, color 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.add-board-btn:active { border-color: var(--accent); color: var(--accent); }
+
+/* ============================================================
+   KANBAN
+============================================================ */
+.kanban-toolbar {
+  padding: 10px 14px 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.kanban-filters {
+  padding: 0 14px 10px;
+  display: flex; gap: 7px; overflow-x: auto; scrollbar-width: none;
+}
+.kanban-filters::-webkit-scrollbar { display: none; }
+.filter-chip {
+  flex-shrink: 0; padding: 6px 13px; border-radius: 99px;
+  font-size: 12px; font-weight: 500; cursor: pointer;
+  border: 1px solid var(--border); background: var(--surface); color: var(--text2);
+  transition: all 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.filter-chip.active { background: var(--accent); border-color: var(--accent); color: white; }
+.kanban-board {
+  display: flex; gap: 12px;
+  padding: 0 14px 80px;
+  overflow-x: auto; scrollbar-width: none;
+  align-items: flex-start;
+}
+.kanban-board::-webkit-scrollbar { display: none; }
+.k-col {
+  flex-shrink: 0; width: 255px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); overflow: hidden;
+}
+.k-col-header {
+  padding: 12px 14px 10px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.k-col-title {
+  display: flex; align-items: center; gap: 7px;
+  font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+}
+.k-dot { width:7px; height:7px; border-radius:50%; }
+.k-count {
+  font-size:10px; color:var(--text3);
+  background:var(--bg3); border-radius:99px; padding:2px 8px; font-weight:600;
+}
+.k-cards { padding:10px; display:flex; flex-direction:column; gap:9px; min-height:60px; }
+.k-empty { text-align:center; padding:16px 8px; color:var(--text3); font-size:12px; }
+
+/* Tarjeta Kanban */
+.kcard {
+  background: var(--bg2); border-radius: var(--radius-sm);
+  border: 1px solid var(--border); padding: 13px;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: transform 0.12s, border-color 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+.kcard::before {
+  content:''; position:absolute; left:0; top:0; bottom:0;
+  width:3px; background:var(--cc, #4a5f78);
+}
+.kcard:active { transform:scale(0.97); }
+.kcard-top { display:flex; align-items:flex-start; justify-content:space-between; gap:7px; margin-bottom:7px; }
+.kcard-cat { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px; color:var(--cc,#4a5f78); }
+.kcard-new { font-size:9px; font-weight:700; background:var(--accent3); color:white; padding:2px 6px; border-radius:99px; flex-shrink:0; }
+.kcard-title { font-size:13px; font-weight:500; line-height:1.4; color:var(--text); margin-bottom:8px; }
+.kcard-tags { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:7px; }
+.kcard-tag { font-size:10px; color:var(--text2); background:var(--surface2); border-radius:6px; padding:2px 7px; }
+.kcard-footer { display:flex; align-items:center; justify-content:space-between; }
+.kcard-due { font-size:10px; color:var(--text3); }
+.kcard-due.urgent { color:var(--accent3); font-weight:600; }
+.kcard-due.soon { color:var(--accent4); font-weight:600; }
+.kcard-ai { font-size:9px; color:var(--accent2); display:flex; align-items:center; gap:3px; }
+
+/* ============================================================
+   FAB
+============================================================ */
+.fab {
+  position: fixed;
+  bottom: calc(var(--nav-h) + var(--safe-bottom) + 14px);
+  right: 16px;
+  width: 50px; height: 50px;
+  background: linear-gradient(135deg, var(--accent), #1a7cd8);
+  border-radius: 15px;
+  display: none; align-items: center; justify-content: center;
+  font-size: 22px; cursor: pointer;
+  box-shadow: 0 4px 20px rgba(61,159,255,0.4);
+  z-index: 40;
+  transition: transform 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.fab.show { display: flex; }
+.fab:active { transform: scale(0.91); }
+
+/* ============================================================
+   DRAWER / MODAL
+============================================================ */
+.overlay {
+  position: fixed; inset: 0; z-index: 100;
+  background: rgba(0,0,0,0.65); backdrop-filter: blur(4px);
+  display: none; align-items: flex-end;
+}
+.overlay.open { display: flex; }
+.drawer {
+  background: var(--bg2); border-radius: 22px 22px 0 0;
+  border-top: 1px solid var(--border);
+  width: 100%; max-height: 94dvh;
+  overflow-y: auto; overflow-x: hidden;
+  padding-bottom: calc(20px + var(--safe-bottom));
+  animation: slideUp 0.28s cubic-bezier(0.34,1.4,0.64,1);
+}
+@keyframes slideUp { from{transform:translateY(100%);opacity:0} to{transform:translateY(0);opacity:1} }
+.drawer-handle { width:38px; height:4px; background:var(--border); border-radius:99px; margin:11px auto 0; }
+.drawer-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px 12px; border-bottom:1px solid var(--border);
+}
+.drawer-title { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; }
+.drawer-close {
+  width:30px; height:30px; background:var(--surface); border-radius:9px;
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:14px;
+  -webkit-tap-highlight-color: transparent;
+}
+.drawer-body { padding:16px; }
+
+/* ============================================================
+   CATEGORY CHIPS
+============================================================ */
+.cat-chips { display:flex; flex-wrap:wrap; gap:7px; }
+.cat-chip {
+  padding:7px 13px; border-radius:99px;
+  font-size:12px; font-weight:600; cursor:pointer;
+  border:2px solid transparent; transition:all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.cat-chip.sel { border-color:currentColor !important; }
+.status-chips { display:flex; gap:7px; flex-wrap:wrap; }
+.status-chip {
+  padding:7px 13px; border-radius:99px;
+  font-size:12px; font-weight:600; cursor:pointer;
+  border:1px solid var(--border); background:var(--bg3); color:var(--text2);
+  transition:all 0.15s; -webkit-tap-highlight-color: transparent;
+}
+.status-chip.sel { background:var(--accent); border-color:var(--accent); color:white; }
+
+/* ============================================================
+   AI SUGGESTION BOX
+============================================================ */
+.ai-box {
+  background: rgba(0,229,160,0.07);
+  border: 1px solid rgba(0,229,160,0.2);
+  border-radius: var(--radius-sm);
+  padding: 12px 13px; margin-bottom: 14px;
+}
+.ai-box-title { font-size:11px; color:var(--accent2); font-weight:700; margin-bottom:5px; display:flex; align-items:center; gap:5px; }
+.ai-box-text { font-size:12px; color:var(--text2); margin-bottom:8px; }
+.ai-chips { display:flex; flex-wrap:wrap; gap:6px; }
+.ai-chip {
+  padding:5px 11px; border-radius:99px; font-size:11px; font-weight:600;
+  cursor:pointer; border:1px solid var(--accent2); color:var(--accent2);
+  background:transparent; transition:all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.ai-chip.applied { background:var(--accent2); color:var(--bg); }
+.ai-loading { display:flex; align-items:center; gap:8px; font-size:12px; color:var(--text2); }
+
+/* ============================================================
+   SYNC SCREEN
+============================================================ */
+.sync-card {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); padding:16px; margin-bottom:12px;
+}
+.sync-card-title { font-family:'Syne',sans-serif; font-size:15px; font-weight:700; margin-bottom:5px; }
+.sync-card-sub { font-size:13px; color:var(--text2); line-height:1.5; margin-bottom:14px; }
+.sync-log {
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:12px; margin-top:12px;
+  font-size:11px; font-family:monospace; line-height:1.8;
+  max-height:140px; overflow-y:auto; display:none;
+}
+.log-ok{color:var(--accent2)} .log-err{color:var(--accent3)} .log-info{color:var(--accent)}
+.pending-list { display:flex; flex-direction:column; gap:8px; margin-top:12px; }
+.pending-item {
+  background:var(--bg3); border-radius:var(--radius-sm);
+  padding:12px 13px; display:flex; align-items:flex-start; gap:11px;
+  cursor:pointer; transition:background 0.15s;
+  -webkit-tap-highlight-color: transparent;
+}
+.pending-item:active { background:var(--surface2); }
+.pending-emoji { font-size:20px; flex-shrink:0; margin-top:1px; }
+.pending-content { flex:1; min-width:0; }
+.pending-subject { font-size:13px; font-weight:500; margin-bottom:3px; }
+.pending-meta { font-size:11px; color:var(--text2); }
+.pending-cat {
+  font-size:10px; font-weight:700; padding:2px 8px; border-radius:99px;
+  background:rgba(0,229,160,0.1); color:var(--accent2); flex-shrink:0;
+}
+
+/* ============================================================
+   CONFIG SCREEN
+============================================================ */
+.cfg-section {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); margin-bottom:12px; overflow:hidden;
+}
+.cfg-section-hdr {
+  padding:13px 15px; border-bottom:1px solid var(--border);
+  font-family:'Syne',sans-serif; font-size:13px; font-weight:700;
+  display:flex; align-items:center; gap:8px; color:var(--text2);
+}
+.cfg-row {
+  padding:13px 15px; border-bottom:1px solid var(--border);
+  display:flex; flex-direction:column; gap:6px;
+}
+.cfg-row:last-child { border-bottom:none; }
+.cfg-label { font-size:11px; color:var(--text2); font-weight:500; }
+.cfg-inline { display:flex; gap:8px; align-items:stretch; }
+.cfg-inline .form-input { flex:1; }
+.cfg-inline .btn { width:auto; padding:11px 14px; white-space:nowrap; }
+.toggle-row {
+  padding:13px 15px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+}
+.toggle-row:last-child { border-bottom:none; }
+.toggle-label { font-size:14px; }
+.toggle-desc { font-size:11px; color:var(--text2); margin-top:2px; }
+.toggle {
+  width:42px; height:24px; background:var(--bg3); border-radius:99px;
+  position:relative; cursor:pointer; flex-shrink:0; transition:background 0.2s;
+  -webkit-tap-highlight-color: transparent;
+}
+.toggle.on { background:var(--accent2); }
+.toggle::after {
+  content:''; position:absolute; top:3px; left:3px;
+  width:18px; height:18px; background:white; border-radius:50%;
+  transition:transform 0.2s; box-shadow:0 2px 5px rgba(0,0,0,0.3);
+}
+.toggle.on::after { transform:translateX(18px); }
+.remitente-item {
+  display:flex; align-items:center; gap:9px;
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:9px 12px; margin-bottom:6px;
+}
+.remitente-email { flex:1; font-size:12px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.remitente-del {
+  width:26px; height:26px; border-radius:7px;
+  background:rgba(255,107,107,0.1); color:var(--accent3);
+  display:flex; align-items:center; justify-content:center;
+  cursor:pointer; font-size:13px; flex-shrink:0;
+}
+
+/* ============================================================
+   AYUDA SCREEN
+============================================================ */
+.help-hero {
+  background:linear-gradient(135deg,var(--bg2),var(--surface));
+  border-bottom:1px solid var(--border);
+  padding:24px 16px 20px; text-align:center;
+}
+.help-hero-icon { font-size:40px; margin-bottom:10px; }
+.help-hero-title { font-family:'Syne',sans-serif; font-size:20px; font-weight:800; margin-bottom:6px; }
+.help-hero-sub { font-size:13px; color:var(--text2); line-height:1.6; }
+.help-section { padding:14px 14px 0; }
+.help-accordion {
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:var(--radius); margin-bottom:10px; overflow:hidden;
+}
+.help-acc-header {
+  padding:14px 15px; display:flex; align-items:center; justify-content:space-between;
+  cursor:pointer; font-weight:600; font-size:14px;
+  -webkit-tap-highlight-color: transparent;
+}
+.help-acc-header:active { background:var(--surface2); }
+.help-acc-icon { font-size:18px; flex-shrink:0; }
+.help-acc-arrow { color:var(--text3); font-size:16px; transition:transform 0.2s; }
+.help-accordion.open .help-acc-arrow { transform:rotate(180deg); }
+.help-acc-body {
+  display:none; padding:0 15px 15px;
+  font-size:13px; color:var(--text2); line-height:1.7;
+  border-top:1px solid var(--border);
+}
+.help-accordion.open .help-acc-body { display:block; }
+.help-step {
+  display:flex; gap:12px; margin-bottom:12px; align-items:flex-start;
+}
+.help-step-num {
+  width:24px; height:24px; border-radius:50%;
+  background:var(--accent); color:white;
+  font-size:11px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; margin-top:1px;
+}
+.help-step-text { flex:1; }
+.help-step-title { font-weight:600; color:var(--text); margin-bottom:2px; }
+.help-code {
+  background:var(--bg3); border-radius:7px;
+  padding:10px 12px; font-family:monospace; font-size:11px;
+  color:var(--accent2); margin:8px 0; word-break:break-all; line-height:1.6;
+}
+.help-link {
+  display:inline-flex; align-items:center; gap:5px;
+  color:var(--accent); font-size:13px; font-weight:600;
+  text-decoration:none; margin:6px 0;
+}
+.help-tip {
+  background:rgba(247,183,49,0.08); border:1px solid rgba(247,183,49,0.2);
+  border-radius:var(--radius-sm); padding:10px 13px;
+  font-size:12px; color:var(--accent4); margin-top:8px; line-height:1.6;
+}
+.help-tip-title { font-weight:700; margin-bottom:3px; }
+
+/* ============================================================
+   ABOUT
+============================================================ */
+.about-hero {
+  text-align:center; padding:28px 16px 20px;
+  background:var(--surface); border-bottom:1px solid var(--border);
+}
+.about-logo {
+  width:72px; height:72px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border-radius:20px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:34px; margin:0 auto 14px;
+  box-shadow:0 0 36px rgba(61,159,255,0.3);
+}
+.about-app-name { font-family:'Syne',sans-serif; font-size:24px; font-weight:800; margin-bottom:4px; }
+.about-version { font-size:11px; color:var(--text3); margin-bottom:12px; }
+.about-desc { font-size:13px; color:var(--text2); line-height:1.6; }
+.credits-brand {
+  font-family:'Syne',sans-serif; font-size:18px; font-weight:800;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+  margin-bottom:3px;
+}
+
+/* ============================================================
+   MISC
+============================================================ */
+.spinner {
+  width:18px; height:18px;
+  border:2px solid rgba(255,255,255,0.2); border-top-color:white;
+  border-radius:50%; animation:spin 0.7s linear infinite; display:inline-block;
+}
+@keyframes spin { to{transform:rotate(360deg)} }
+.toast {
+  position:fixed; bottom:calc(var(--nav-h) + var(--safe-bottom) + 16px);
+  left:50%; transform:translateX(-50%) translateY(16px);
+  background:var(--surface2); border:1px solid var(--border);
+  border-radius:99px; padding:9px 18px;
+  font-size:13px; color:var(--text); white-space:nowrap;
+  z-index:200; opacity:0; transition:all 0.3s; pointer-events:none;
+  box-shadow:var(--shadow); max-width:90vw;
+}
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+.no-data { text-align:center; padding:36px 20px; color:var(--text3); }
+.no-data-icon { font-size:44px; margin-bottom:10px; }
+.no-data-text { font-size:14px; line-height:1.6; }
+.user-avatar {
+  width:32px; height:32px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent5),var(--accent));
+  display:flex; align-items:center; justify-content:center;
+  font-size:14px; font-weight:700; color:white; flex-shrink:0;
+  overflow:hidden;
+}
+.user-avatar img { width:100%; height:100%; object-fit:cover; }
+.role-badge {
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.4px;
+  padding:2px 8px; border-radius:99px;
+}
+.role-badge.admin { background:rgba(61,159,255,0.15); color:var(--accent); }
+.role-badge.colaborador { background:rgba(0,229,160,0.15); color:var(--accent2); }
+.role-badge.lector { background:rgba(247,183,49,0.15); color:var(--accent4); }
+.member-row {
+  display:flex; align-items:center; gap:10px;
+  padding:11px 15px; border-bottom:1px solid var(--border);
+}
+.member-row:last-child { border-bottom:none; }
+.member-info { flex:1; min-width:0; }
+.member-name { font-size:13px; font-weight:500; }
+.member-email { font-size:11px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.invite-code-box {
+  background:var(--bg3); border:1px solid var(--border);
+  border-radius:var(--radius-sm); padding:14px;
+  text-align:center; margin-top:12px;
+}
+.invite-code {
+  font-family:monospace; font-size:28px; font-weight:700;
+  letter-spacing:8px; color:var(--accent); margin:6px 0;
+}
+.invite-code-hint { font-size:11px; color:var(--text3); }
+::-webkit-scrollbar { width:3px; height:3px; }
+::-webkit-scrollbar-track { background:transparent; }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:99px; }
+.pb80 { padding-bottom:80px; }
+</style>
+</head>
+<body>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-icon">🎒</div>
+  <div class="splash-title">EscolApp</div>
+  <div class="splash-sub">Organiza · Aprende · Avanza</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- SETUP WIZARD -->
+<div id="setupWizard">
+  <div class="wizard-header">
+    <div class="wizard-logo">🎒</div>
+    <div class="wizard-title">¡Bienvenido a EscolApp!</div>
+    <div class="wizard-sub">Configura tu app en 4 pasos sencillos.<br>Cada familia gestiona sus propios datos de forma privada.</div>
+  </div>
+  <div class="wizard-steps" id="wizardDots"></div>
+
+  <!-- Paso 1: Firebase -->
+  <div class="wizard-panel active" id="wp1">
+    <div class="wizard-step-title"><div class="wizard-step-num">1</div> Crear proyecto Firebase</div>
+    <div class="wizard-desc">Firebase es la base de datos gratuita de Google que permite colaboración en tiempo real entre padres e hijos. Cada familia tiene su propio proyecto — tus datos son completamente privados.</div>
+    <a class="wizard-link" href="https://console.firebase.google.com" target="_blank">🔗 Abrir Firebase Console ↗</a>
+    <div class="wizard-desc">En Firebase Console:</div>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+      <div class="help-step"><div class="help-step-num">1</div><div class="help-step-text"><div class="help-step-title">Crear proyecto</div>Toca "Crear un proyecto" → nombre: <strong>EscolApp</strong> → desactiva Analytics → Crear.</div></div>
+      <div class="help-step"><div class="help-step-num">2</div><div class="help-step-text"><div class="help-step-title">Agregar app web</div>Menú ⚙️ → Configuración → sección "Tus apps" → ícono <strong>&lt;/&gt;</strong> → nombre: EscolApp → Registrar.</div></div>
+      <div class="help-step"><div class="help-step-num">3</div><div class="help-step-text"><div class="help-step-title">Copiar credenciales</div>Copia el objeto <strong>firebaseConfig</strong> que aparece. Lo necesitas en el paso 2.</div></div>
+      <div class="help-step"><div class="help-step-num">4</div><div class="help-step-text"><div class="help-step-title">Activar Authentication</div>Menú lateral → Authentication → Comenzar → pestaña "Sign-in method" → Google → Activar.</div></div>
+      <div class="help-step"><div class="help-step-num">5</div><div class="help-step-text"><div class="help-step-title">Activar Firestore</div>Menú lateral → Firestore Database → Crear base de datos → Modo producción → región <strong>us-east1</strong>.</div></div>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-primary" onclick="wizardNext(2)">Listo, siguiente →</button>
+    </div>
+  </div>
+
+  <!-- Paso 2: Credenciales Firebase -->
+  <div class="wizard-panel" id="wp2">
+    <div class="wizard-step-title"><div class="wizard-step-num">2</div> Pegar credenciales Firebase</div>
+    <div class="wizard-desc">Pega aquí el objeto <strong>firebaseConfig</strong> que copiaste. Tiene este formato:</div>
+    <div class="wizard-code-block">const firebaseConfig = {<br>&nbsp;&nbsp;apiKey: "AIza...",<br>&nbsp;&nbsp;authDomain: "escolapp-xxx.firebaseapp.com",<br>&nbsp;&nbsp;projectId: "escolapp-xxx",<br>&nbsp;&nbsp;storageBucket: "escolapp-xxx.appspot.com",<br>&nbsp;&nbsp;messagingSenderId: "123456789",<br>&nbsp;&nbsp;appId: "1:123456789:web:abc..."<br>};</div>
+    <div class="form-group">
+      <label class="form-label">API Key *</label>
+      <input class="form-input" id="cfgFbApiKey" placeholder="AIzaSy...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Auth Domain *</label>
+      <input class="form-input" id="cfgFbAuthDomain" placeholder="tuapp.firebaseapp.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Project ID *</label>
+      <input class="form-input" id="cfgFbProjectId" placeholder="tuapp-12345">
+    </div>
+    <div class="form-group">
+      <label class="form-label">App ID *</label>
+      <input class="form-input" id="cfgFbAppId" placeholder="1:123456789:web:abc...">
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-ghost" onclick="wizardNext(1)">← Atrás</button>
+      <button class="btn btn-primary" onclick="wizardSaveFirebase()">Guardar y continuar →</button>
+    </div>
+  </div>
+
+  <!-- Paso 3: Gemini API -->
+  <div class="wizard-panel" id="wp3">
+    <div class="wizard-step-title"><div class="wizard-step-num">3</div> Gemini API (clasificación IA)</div>
+    <div class="wizard-desc">Gemini analiza automáticamente el asunto de cada correo y sugiere categoría, asignatura y fecha. Es <strong>100% gratuito</strong> hasta 1,500 solicitudes/día.</div>
+    <a class="wizard-link" href="https://aistudio.google.com/app/apikey" target="_blank">🔗 Obtener API Key gratis ↗</a>
+    <div class="wizard-desc">En Google AI Studio:<br>1. Inicia sesión con tu cuenta Google<br>2. Toca "Create API Key"<br>3. Copia la clave y pégala aquí:</div>
+    <div class="form-group">
+      <label class="form-label">Gemini API Key</label>
+      <input class="form-input" id="cfgGeminiKey" placeholder="AIzaSy... (opcional, pero recomendado)">
+      <div class="form-hint">Si no la configuras ahora, la app usará clasificación por palabras clave.</div>
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-ghost" onclick="wizardNext(2)">← Atrás</button>
+      <button class="btn btn-primary" onclick="wizardSaveGemini()">Continuar →</button>
+    </div>
+  </div>
+
+  <!-- Paso 4: Perfil -->
+  <div class="wizard-panel" id="wp4">
+    <div class="wizard-step-title"><div class="wizard-step-num">4</div> Tu perfil en EscolApp</div>
+    <div class="wizard-desc">¿Cómo quieres aparecer en los tableros compartidos?</div>
+    <div class="form-group">
+      <label class="form-label">Tu nombre *</label>
+      <input class="form-input" id="cfgUserName" placeholder="Ej: Papá William, Mamá Ana, Sofía...">
+    </div>
+    <div class="form-group">
+      <label class="form-label">¿Quién eres?</label>
+      <select class="form-select" id="cfgUserRole">
+        <option value="admin">👨‍👩‍👧 Padre / Madre — Administro los tableros de mis hijos</option>
+        <option value="admin">🧑‍🎓 Estudiante autónomo — Gestiono mis propias tareas</option>
+        <option value="colaborador">🧑‍🤝‍🧑 Tutor / Acudiente — Apoyo y colaboro</option>
+        <option value="lector">👀 Solo quiero ver — Sin editar</option>
+      </select>
+    </div>
+    <div class="help-tip" style="margin-bottom:14px">
+      <div class="help-tip-title">💡 Sobre los roles en los tableros</div>
+      <strong>Admin:</strong> crea tableros, invita miembros y cambia roles.<br>
+      <strong>Colaborador:</strong> crea y edita tarjetas.<br>
+      <strong>Lector:</strong> solo ve y marca tareas como listas.<br><br>
+      Puedes tener <strong>múltiples admins</strong> por tablero. Un padre puede ser admin en el tablero de un hijo pequeño y solo colaborador en el de un hijo mayor.
+    </div>
+    <div class="wizard-nav">
+      <button class="btn btn-ghost" onclick="wizardNext(3)">← Atrás</button>
+      <button class="btn btn-primary" onclick="wizardFinish()">¡Empezar! 🎒</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP PRINCIPAL -->
+<div id="app" style="display:none">
+  <div class="header">
+    <div class="header-left">
+      <div class="header-logo">🎒</div>
+      <div>
+        <div class="header-title" id="hTitle">EscolApp</div>
+        <div class="header-sub" id="hSub"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="icon-btn" id="hSyncBtn" onclick="goScreen('sync')" style="display:none" title="Sincronizar">
+        🔄<div class="badge-dot" id="syncDot"></div>
+      </div>
+      <div class="icon-btn" onclick="goScreen('boards')" id="hBoardsBtn" title="Tableros" style="display:none">🏠</div>
+      <div class="user-avatar" id="hUserAvatar" onclick="goScreen('config')" title="Perfil"></div>
+    </div>
+  </div>
+
+  <div id="main">
+
+    <!-- TABLEROS -->
+    <div class="screen active" id="screen-boards">
+      <div class="section-title">Mis Tableros</div>
+      <div class="section-sub">Gestiona las tareas de cada hijo y tableros adicionales.</div>
+      <div class="boards-container" id="boardsList"></div>
+    </div>
+
+    <!-- KANBAN -->
+    <div class="screen" id="screen-kanban">
+      <div class="kanban-toolbar">
+        <select class="form-select" style="flex:1;font-size:12px;padding:7px 30px 7px 10px" id="memberFilter" onchange="renderKanban()">
+          <option value="all">Todos los miembros</option>
+        </select>
+      </div>
+      <div class="kanban-filters" id="kanbanFilters">
+        <div class="filter-chip active" data-cat="all" onclick="filterCat(this,'all')">Todo</div>
+        <div class="filter-chip" data-cat="Tarea" onclick="filterCat(this,'Tarea')">📚 Tarea</div>
+        <div class="filter-chip" data-cat="Material" onclick="filterCat(this,'Material')">🛒 Material</div>
+        <div class="filter-chip" data-cat="Informativo" onclick="filterCat(this,'Informativo')">ℹ️ Info</div>
+        <div class="filter-chip" data-cat="Citacion" onclick="filterCat(this,'Citacion')">📅 Citación</div>
+        <div class="filter-chip" data-cat="Evento" onclick="filterCat(this,'Evento')">🎉 Evento</div>
+      </div>
+      <div class="kanban-board" id="kanbanBoard"></div>
+    </div>
+
+    <!-- SYNC -->
+    <div class="screen" id="screen-sync">
+      <div style="padding:12px 14px 80px">
+        <div class="section-title">Sincronizar Gmail</div>
+        <div class="section-sub">Importa mensajes del colegio como tarjetas. Solo disponible en tableros de tipo <strong>Escolar</strong>.</div>
+
+        <div class="sync-card">
+          <div class="sync-card-title">📧 Estado Gmail</div>
+          <div id="gmailStatusText" style="font-size:13px;color:var(--text2);margin-bottom:12px">No configurado</div>
+          <button class="btn btn-primary" id="gmailConnectBtn" onclick="connectGmail()">Conectar Gmail</button>
+        </div>
+
+        <div id="syncActionsBlock" style="display:none">
+          <div class="sync-card">
+            <div class="sync-card-title">🔍 Buscar mensajes del colegio</div>
+            <div class="sync-card-sub">Busca en los correos de los remitentes configurados (últimos 30 días).</div>
+            <button class="btn btn-success" id="runSyncBtn" onclick="runSync()">
+              <span id="runSyncTxt">🔍 Buscar mensajes</span>
+            </button>
+            <div class="sync-log" id="syncLog"></div>
+          </div>
+          <div id="pendingSection" style="display:none">
+            <div class="section-title" style="font-size:16px;padding:12px 0 6px">Encontrados</div>
+            <div class="section-sub" style="padding:0 0 10px">Toca cada mensaje para crear su tarjeta Kanban.</div>
+            <div class="pending-list" id="pendingList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="screen" id="screen-config">
+      <div style="padding:12px 14px 80px">
+        <div class="section-title">Configuración</div>
+
+        <!-- Perfil -->
+        <div class="cfg-section">
+          <div class="cfg-section-hdr">👤 Tu perfil</div>
+          <div class="cfg-row">
+            <div class="cfg-label">Nombre en los tableros</div>
+            <input class="form-input" id="cfgName" placeholder="Tu nombre">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">Rol</div>
+            <select class="form-select" id="cfgRole">
+              <option value="admin">👨‍👩‍👧 Padre/Madre (administrador)</option>
+              <option value="colaborador">🧑‍🤝‍🧑 Tutor colaborador</option>
+              <option value="lector">👦 Hijo/a (lector)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Firebase -->
+        <div class="cfg-section">
+          <div class="cfg-section-hdr">🔥 Firebase (base de datos)</div>
+          <div class="cfg-row">
+            <div class="cfg-label">API Key</div>
+            <input class="form-input" id="cfgFbKey2" placeholder="AIzaSy...">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">Auth Domain</div>
+            <input class="form-input" id="cfgFbAuth2" placeholder="tuapp.firebaseapp.com">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">Project ID</div>
+            <input class="form-input" id="cfgFbProj2" placeholder="tuapp-12345">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">App ID</div>
+            <input class="form-input" id="cfgFbAppId2" placeholder="1:123...">
+          </div>
+        </div>
+
+        <!-- Gemini -->
+        <div class="cfg-section">
+          <div class="cfg-section-hdr">🤖 Gemini IA</div>
+          <div class="cfg-row">
+            <div class="cfg-label">API Key de Gemini <a href="https://aistudio.google.com/app/apikey" target="_blank" style="color:var(--accent);font-size:11px">Obtener gratis ↗</a></div>
+            <input class="form-input" id="cfgGemKey2" placeholder="AIzaSy...">
+          </div>
+        </div>
+
+        <!-- Gmail -->
+        <div class="cfg-section">
+          <div class="cfg-section-hdr">📧 Gmail (solo tableros escolares)</div>
+          <div class="cfg-row">
+            <div class="cfg-label">Correo que recibe notificaciones Phidias</div>
+            <input class="form-input" type="email" id="cfgGmailEmail" placeholder="tu@gmail.com">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">Contraseña de aplicación <a href="https://myaccount.google.com/apppasswords" target="_blank" style="color:var(--accent);font-size:11px">¿Cómo obtenerla? ↗</a></div>
+            <input class="form-input" type="password" id="cfgGmailPass" placeholder="••••••••••••••••">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">Remitentes del colegio</div>
+            <div id="remitenteList2"></div>
+            <div class="cfg-inline" style="margin-top:7px">
+              <input class="form-input" type="email" id="newRem2" placeholder="notificaciones@colegio.edu.co">
+              <button class="btn btn-secondary btn-sm" onclick="addRem2()">+ Agregar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Phidias -->
+        <div class="cfg-section">
+          <div class="cfg-section-hdr">🏫 Acceso a Phidias</div>
+          <div class="cfg-row">
+            <div class="cfg-label">URL del colegio</div>
+            <input class="form-input" type="url" id="cfgPhUrl" placeholder="https://micolegio.phidias.co">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">Usuario</div>
+            <input class="form-input" id="cfgPhUser" placeholder="tu@correo.com">
+          </div>
+          <div class="cfg-row">
+            <div class="cfg-label">Contraseña</div>
+            <input class="form-input" type="password" id="cfgPhPass" placeholder="••••••••">
+          </div>
+        </div>
+
+        <!-- Preferencias -->
+        <div class="cfg-section">
+          <div class="cfg-section-hdr">⚙️ Preferencias</div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Notificaciones</div><div class="toggle-desc">Alertas de nuevas tarjetas</div></div>
+            <div class="toggle" id="tglNotif" onclick="tgl('notif')"></div>
+          </div>
+          <div class="toggle-row">
+            <div><div class="toggle-label">Sincronización automática</div><div class="toggle-desc">Revisar Gmail cada hora</div></div>
+            <div class="toggle" id="tglAutoSync" onclick="tgl('autoSync')"></div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-bottom:10px" onclick="saveConfig()">💾 Guardar configuración</button>
+        <button class="btn btn-danger" onclick="doReset()">🗑️ Borrar todos mis datos</button>
+      </div>
+    </div>
+
+    <!-- AYUDA -->
+    <div class="screen" id="screen-help">
+      <div class="help-hero">
+        <div class="help-hero-icon">🆘</div>
+        <div class="help-hero-title">Centro de Ayuda</div>
+        <div class="help-hero-sub">Guía completa para configurar y usar EscolApp.<br>Cada familia gestiona sus propios datos.</div>
+      </div>
+      <div class="help-section pb80" id="helpContent"></div>
+    </div>
+
+    <!-- ACERCA DE -->
+    <div class="screen" id="screen-about">
+      <div class="about-hero">
+        <div class="about-logo">🎒</div>
+        <div class="about-app-name">EscolApp</div>
+        <div class="about-version">Versión 2.0 · Mayo 2026</div>
+        <div class="about-desc">Organiza tus tareas del colegio en un tablero Kanban colaborativo. Para estudiantes, padres y familias que quieren estar al día — juntos.</div>
+      </div>
+      <div style="padding:14px 14px 80px">
+        <div class="cfg-section" style="margin-bottom:12px">
+          <div class="cfg-section-hdr">🐣 Créditos</div>
+          <div style="padding:16px">
+            <div class="credits-brand">🐣 Pollitos Apps</div>
+            <div style="font-size:13px;color:var(--text2);line-height:1.7">
+              Soluciones digitales para la vida cotidiana.<br>
+              EscolApp — desarrollado con ❤️ para familias y estudiantes colombianos.<br>
+              Powered by Gemini AI · Firebase · Claude
+            </div>
+          </div>
+        </div>
+        <div class="cfg-section" style="margin-bottom:12px">
+          <div class="cfg-section-hdr">📱 Instalar como app</div>
+          <div style="padding:14px;font-size:13px;color:var(--text2);line-height:1.7">
+            En Chrome Android: menú <strong>⋮</strong> → <strong>"Agregar a pantalla de inicio"</strong>.<br>
+            La app se instala con ícono propio sin necesitar Google Play.
+          </div>
+        </div>
+        <div class="cfg-section">
+          <div class="cfg-section-hdr">🔒 Privacidad</div>
+          <div style="padding:14px;font-size:13px;color:var(--text2);line-height:1.7">
+            Tus datos se guardan en tu propio proyecto Firebase bajo tu cuenta de Google. Pollitos Apps no almacena ni accede a ningún dato de los usuarios.
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+
+  <nav class="bottom-nav" id="bottomNav">
+    <div class="nav-item active" data-screen="boards" onclick="goScreen('boards',this)">
+      <div class="ni">🏠</div><span>Inicio</span>
+    </div>
+    <div class="nav-item" data-screen="sync" onclick="goScreen('sync',this)" id="navSync" style="display:none">
+      <div class="ni">🔄</div><span>Sync</span>
+      <div class="nav-badge" id="navSyncBadge"></div>
+    </div>
+    <div class="nav-item" data-screen="kanban" onclick="goScreen('kanban',this)" id="navKanban" style="display:none">
+      <div class="ni">📋</div><span>Tablero</span>
+    </div>
+    <div class="nav-item" data-screen="help" onclick="goScreen('help',this)">
+      <div class="ni">🆘</div><span>Ayuda</span>
+    </div>
+    <div class="nav-item" data-screen="config" onclick="goScreen('config',this)">
+      <div class="ni">⚙️</div><span>Config.</span>
+    </div>
+    <div class="nav-item" data-screen="about" onclick="goScreen('about',this)">
+      <div class="ni">ℹ️</div><span>Acerca</span>
+    </div>
+  </nav>
+</div>
+
+<!-- FAB -->
+<div class="fab" id="fab" onclick="openAddCard()">＋</div>
+
+<!-- OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="drawer" id="drawer">
+    <div class="drawer-handle"></div>
+    <div class="drawer-header">
+      <div class="drawer-title" id="drawerTitle"></div>
+      <div class="drawer-close" onclick="closeDrawer()">✕</div>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// ESTADO
+// ============================================================
+const S = {
+  user: { name:'', role:'admin', avatar:'' },
+  firebase: { apiKey:'', authDomain:'', projectId:'', appId:'' },
+  geminiKey: '',
+  gmail: { email:'', pass:'', connected:false, remitentes:[] },
+  phidias: { url:'', user:'', pass:'' },
+  prefs: { notif:false, autoSync:false },
+  boards: [],          // { id, name, type:'escolar'|'libre', color, emoji, members:[], inviteCode }
+  cards: {},           // { boardId: [cards] }
+  activeBoardId: null,
+  catFilter: 'all',
+  pendingEmails: [],
+  editingCardId: null,
+  configured: false,
+};
+
+// ============================================================
+// CATEGORÍAS Y COLUMNAS
+// ============================================================
+const CATS = [
+  {id:'Tarea',      label:'Tarea',       emoji:'📚', color:'#3d9fff'},
+  {id:'Material',   label:'Material',    emoji:'🛒', color:'#f7b731'},
+  {id:'Informativo',label:'Informativo', emoji:'💡', color:'#00e5a0'},
+  {id:'Citacion',   label:'Citación',    emoji:'📅', color:'#ff6b6b'},
+  {id:'Evento',     label:'Evento',      emoji:'🎉', color:'#b06eff'},
+  {id:'Otro',       label:'Otro',        emoji:'📌', color:'#8a9bb0'},
+];
+const COLS = [
+  {id:'nuevo',     label:'Nuevo',      color:'#3d9fff', emoji:'🆕'},
+  {id:'pendiente', label:'Pendiente',  color:'#f7b731', emoji:'⏳'},
+  {id:'en_proceso',label:'En proceso', color:'#b06eff', emoji:'🔄'},
+  {id:'listo',     label:'Listo',      color:'#00e5a0', emoji:'✅'},
+];
+const BOARD_COLORS = ['#3d9fff','#00e5a0','#f7b731','#ff6b6b','#b06eff','#ff9f43'];
+const BOARD_EMOJIS_CHILD = ['👦','👧','🧒','🧒‍♀️','👦🏾','👧🏽'];
+
+// ============================================================
+// STORAGE
+// ============================================================
+function persist() {
+  localStorage.setItem('escolapp_state', JSON.stringify({
+    user:S.user, firebase:S.firebase, geminiKey:S.geminiKey,
+    gmail:S.gmail, phidias:S.phidias, prefs:S.prefs,
+    boards:S.boards, cards:S.cards, configured:S.configured,
+  }));
+}
+function hydrate() {
+  try {
+    const d = JSON.parse(localStorage.getItem('escolapp_state') || 'null');
+    if (!d) return;
+    Object.assign(S.user, d.user||{});
+    Object.assign(S.firebase, d.firebase||{});
+    S.geminiKey = d.geminiKey||'';
+    Object.assign(S.gmail, d.gmail||{});
+    Object.assign(S.phidias, d.phidias||{});
+    Object.assign(S.prefs, d.prefs||{});
+    S.boards = d.boards||[];
+    S.cards = d.cards||{};
+    S.configured = d.configured||false;
+  } catch(e){}
+}
+
+// ============================================================
+// UTILS
+// ============================================================
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+
+// ============================================================
+// SISTEMA DE INVITACIÓN INTELIGENTE
+// El token codifica: Firebase config + boardId + rol por defecto
+// Formato: base64url del JSON comprimido → ~40 chars manejables
+// El código corto (6 chars) es el sufijo visible para compartir
+// ============================================================
+function buildInviteToken(boardId) {
+  const payload = {
+    v: 1,                              // versión del protocolo
+    fb: {
+      k: S.firebase.apiKey,
+      a: S.firebase.authDomain,
+      p: S.firebase.projectId,
+      i: S.firebase.appId,
+    },
+    b: boardId,                        // board ID
+    r: 'colaborador',                  // rol por defecto al unirse
+    n: new Date().toISOString().slice(0,10), // fecha de creación
+  };
+  try {
+    const json = JSON.stringify(payload);
+    const b64  = btoa(unescape(encodeURIComponent(json)))
+                  .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+    return b64;
+  } catch(e) { return ''; }
+}
+
+function parseInviteToken(token) {
+  try {
+    // Intentar decodificar como token largo (base64url)
+    const b64 = token.replace(/-/g,'+').replace(/_/g,'/');
+    const json = decodeURIComponent(escape(atob(b64)));
+    return JSON.parse(json);
+  } catch(e) { return null; }
+}
+
+// Código corto de 6 chars (solo para mostrar visualmente)
+const invCode = () => Math.random().toString(36).slice(2,8).toUpperCase();
+function toast(msg, ms=2600) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),ms);
+}
+const catInfo = id => CATS.find(c=>c.id===id)||CATS[5];
+function daysUntil(ds) {
+  if (!ds) return null;
+  const d=new Date(ds), n=new Date();
+  n.setHours(0,0,0,0); d.setHours(0,0,0,0);
+  return Math.round((d-n)/86400000);
+}
+function fmtDate(ds) {
+  if (!ds) return '';
+  return new Date(ds).toLocaleDateString('es-CO',{day:'2-digit',month:'short'});
+}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function activeBoard(){ return S.boards.find(b=>b.id===S.activeBoardId); }
+function boardCards(){ return S.cards[S.activeBoardId]||[]; }
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+const SCREEN_TITLES = {
+  boards:'Mis Tableros', kanban:'Tablero', sync:'Sincronizar Gmail',
+  config:'Configuración', help:'Ayuda', about:'Acerca de EscolApp'
+};
+function goScreen(name, el) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const navEl = el || document.querySelector(`[data-screen="${name}"]`);
+  if (navEl) navEl.classList.add('active');
+
+  const board = activeBoard();
+  document.getElementById('hTitle').textContent =
+    name==='kanban' && board ? board.name : 'EscolApp';
+  document.getElementById('hSub').textContent =
+    name==='kanban' && board ? (board.type==='escolar'?'📚 Escolar':'🟣 Libre') : SCREEN_TITLES[name]||'';
+
+  document.getElementById('hSyncBtn').style.display = (name==='kanban' && board?.type==='escolar') ? 'flex' : 'none';
+  document.getElementById('hBoardsBtn').style.display = name==='kanban' ? 'flex' : 'none';
+  document.getElementById('fab').classList.toggle('show', name==='kanban');
+
+  if (name==='boards')  renderBoards();
+  if (name==='kanban')  renderKanban();
+  if (name==='sync')    renderSync();
+  if (name==='config')  renderConfig();
+  if (name==='help')    renderHelp();
+}
+
+// ============================================================
+// WIZARD
+// ============================================================
+let wizStep = 1;
+const WIZ_STEPS = 4;
+function renderWizDots() {
+  const c = document.getElementById('wizardDots');
+  c.innerHTML = '';
+  for (let i=1;i<=WIZ_STEPS;i++) {
+    const d = document.createElement('div');
+    d.className = 'wizard-step-dot' + (i<wizStep?' done':i===wizStep?' active':'');
+    c.appendChild(d);
+  }
+}
+function wizardNext(step) {
+  document.querySelectorAll('.wizard-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('wp'+step).classList.add('active');
+  wizStep = step; renderWizDots();
+  document.getElementById('setupWizard').scrollTop = 0;
+}
+function wizardSaveFirebase() {
+  const k=document.getElementById('cfgFbApiKey').value.trim();
+  const a=document.getElementById('cfgFbAuthDomain').value.trim();
+  const p=document.getElementById('cfgFbProjectId').value.trim();
+  const id=document.getElementById('cfgFbAppId').value.trim();
+  if (!k||!a||!p||!id) { toast('Completa todos los campos Firebase'); return; }
+  S.firebase = {apiKey:k, authDomain:a, projectId:p, appId:id};
+  persist(); wizardNext(3);
+}
+function wizardSaveGemini() {
+  S.geminiKey = document.getElementById('cfgGeminiKey').value.trim();
+  persist(); wizardNext(4);
+}
+function wizardFinish() {
+  const name = document.getElementById('cfgUserName').value.trim();
+  if (!name) { toast('Ingresa tu nombre'); return; }
+  S.user.name = name;
+  S.user.role = document.getElementById('cfgUserRole').value;
+  S.configured = true;
+  // Demo boards
+  if (S.boards.length === 0) {
+    const b1 = {id:uid(), name:'Hijo 1', type:'escolar', color:'#3d9fff', emoji:'👦', inviteCode:invCode(), members:[{name:S.user.name, role:'admin'}]};
+    const b2 = {id:uid(), name:'Hijo 2', type:'escolar', color:'#00e5a0', emoji:'👧', inviteCode:invCode(), members:[{name:S.user.name, role:'admin'}]};
+    const b3 = {id:uid(), name:'Familia General', type:'libre', color:'#b06eff', emoji:'🏠', inviteCode:invCode(), members:[{name:S.user.name, role:'admin'}]};
+    S.boards = [b1, b2, b3];
+    const now = new Date();
+    const d = (n) => new Date(now.getTime()+n*86400000).toISOString().slice(0,10);
+    S.cards[b1.id] = [
+      {id:uid(),title:'Afrocolombianidad 309 - Materiales',category:'Material',status:'nuevo',subject:'Ciencias Sociales',teacher:'',dueDate:d(2),notes:'Ver detalle en Phidias',link:'',isNew:true,aiSuggested:true,createdAt:now.toISOString()},
+      {id:uid(),title:'Presentación Actividad en grupo',category:'Evento',status:'pendiente',subject:'Español',teacher:'',dueDate:d(5),notes:'',link:'',isNew:false,aiSuggested:true,createdAt:now.toISOString()},
+    ];
+    S.cards[b2.id] = [
+      {id:uid(),title:'Reunión de padres - Primer periodo',category:'Citacion',status:'nuevo',subject:'',teacher:'Directora de grupo',dueDate:d(7),notes:'',link:'',isNew:true,aiSuggested:false,createdAt:now.toISOString()},
+    ];
+    S.cards[b3.id] = [];
+  }
+  persist();
+  launchApp();
+}
+
+// ============================================================
+// APP LAUNCH
+// ============================================================
+function launchApp() {
+  document.getElementById('setupWizard').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  updateUserAvatar();
+  goScreen('boards', document.querySelector('[data-screen="boards"]'));
+}
+function updateUserAvatar() {
+  const av = document.getElementById('hUserAvatar');
+  av.textContent = S.user.name ? S.user.name.charAt(0).toUpperCase() : '?';
+}
+
+// ============================================================
+// TABLEROS
+// ============================================================
+function renderBoards() {
+  const el = document.getElementById('boardsList');
+  const allCards = Object.values(S.cards).flat();
+  el.innerHTML = '';
+
+  S.boards.forEach(b => {
+    const bCards = S.cards[b.id]||[];
+    const pending = bCards.filter(c=>c.status!=='listo').length;
+    const newCount = bCards.filter(c=>c.isNew).length;
+    const div = document.createElement('div');
+    div.className = 'board-item';
+    div.innerHTML = `
+      <div class="board-avatar" style="background:${b.color}22">${b.emoji}</div>
+      <div class="board-info">
+        <div class="board-tag ${b.type}">${b.type==='escolar'?'📚 Escolar':'🟣 Libre'}</div>
+        <div class="board-name">${b.name}</div>
+        <div class="board-meta">
+          <div class="board-meta-item">📋 ${bCards.length} tarjetas</div>
+          <div class="board-meta-item">⏳ ${pending} pendientes</div>
+          ${newCount>0?`<div class="board-meta-item" style="color:var(--accent3)">🆕 ${newCount} nuevas</div>`:''}
+        </div>
+      </div>
+      <div class="board-arrow">›</div>
+    `;
+    div.onclick = () => openBoard(b.id);
+    el.appendChild(div);
+  });
+
+  // Botones de acción
+  const actions = document.createElement('div');
+  actions.style.cssText = 'display:flex;gap:10px;flex-direction:column;margin-top:4px';
+  actions.innerHTML = `
+    <button class="add-board-btn" onclick="openNewBoard('escolar')">➕ Nuevo tablero escolar (hijo)</button>
+    <button class="add-board-btn" onclick="openNewBoard('libre')">➕ Nuevo tablero libre (familiar)</button>
+    <button class="btn btn-ghost" style="margin-top:4px" onclick="openJoinBoard()">🔗 Unirse a tablero con código</button>
+  `;
+  el.appendChild(actions);
+}
+
+function openBoard(boardId) {
+  S.activeBoardId = boardId;
+  // Mostrar nav del kanban
+  document.getElementById('navSync').style.display = '';
+  document.getElementById('navKanban').style.display = '';
+  goScreen('kanban', document.querySelector('[data-screen="kanban"]'));
+}
+
+function openNewBoard(type) {
+  showDrawer('Nuevo tablero', `
+    <div class="form-group">
+      <label class="form-label">Nombre *</label>
+      <input class="form-input" id="nbName" placeholder="${type==='escolar'?'Ej: Sofía, Carlos 5°...':'Ej: Familia, Proyectos...'}">
+    </div>
+    ${type==='escolar'?`
+    <div class="form-group">
+      <label class="form-label">Grado / Curso</label>
+      <input class="form-input" id="nbGrade" placeholder="Ej: 5° Primaria">
+    </div>`:''}
+    <div class="form-group">
+      <label class="form-label">Ícono</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${(type==='escolar'?BOARD_EMOJIS_CHILD:['🏠','📁','⭐','🎯','🔖','🗂']).map((e,i)=>`<div onclick="selBoardEmoji(this,'${e}')" data-emoji="${e}" style="width:38px;height:38px;border-radius:10px;background:var(--bg3);display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;border:2px solid ${i===0?'var(--accent)':'transparent'}">${e}</div>`).join('')}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Color</label>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        ${BOARD_COLORS.map((c,i)=>`<div onclick="selBoardColor(this,'${c}')" data-color="${c}" style="width:30px;height:30px;border-radius:50%;background:${c};cursor:pointer;border:3px solid ${i===0?'white':'transparent'}"></div>`).join('')}
+      </div>
+    </div>
+    <div class="modal-actions" style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeDrawer()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNewBoard('${type}')">Crear tablero</button>
+    </div>
+  `);
+}
+
+function selBoardEmoji(el,e) { document.querySelectorAll('[data-emoji]').forEach(x=>x.style.borderColor='transparent'); el.style.borderColor='var(--accent)'; }
+function selBoardColor(el,c) { document.querySelectorAll('[data-color]').forEach(x=>x.style.borderColor='transparent'); el.style.borderColor='white'; }
+
+function saveNewBoard(type) {
+  const name = document.getElementById('nbName')?.value.trim();
+  if (!name) { toast('El nombre es obligatorio'); return; }
+  const emojiEl = document.querySelector('[data-emoji][style*="accent"]');
+  const colorEl = document.querySelector('[data-color][style*="white"]');
+  const emoji = emojiEl?.dataset.emoji || (type==='escolar'?'👦':'🏠');
+  const color = colorEl?.dataset.color || BOARD_COLORS[0];
+  const grade = document.getElementById('nbGrade')?.value.trim()||'';
+  const b = {
+    id:uid(), name, type, color, emoji,
+    grade, inviteCode:invCode(),
+    members:[{name:S.user.name, role:S.user.role}]
+  };
+  S.boards.push(b);
+  S.cards[b.id] = [];
+  persist(); closeDrawer(); renderBoards();
+  toast(`${emoji} Tablero "${name}" creado`);
+}
+
+function openJoinBoard() {
+  showDrawer('Unirse a tablero', `
+    <div style="font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6">
+      El administrador del tablero te envió un <strong>enlace o token de invitación</strong> por WhatsApp. Pégalo aquí — la app se configura sola.
+    </div>
+    <div class="form-group">
+      <label class="form-label">Token o código de invitación</label>
+      <textarea class="form-input" id="joinToken" rows="3"
+        placeholder="Pega aquí el token o enlace que te compartieron..."
+        style="font-size:12px;font-family:monospace;word-break:break-all"></textarea>
+      <div class="form-hint">Puede ser un texto largo (token completo) o un enlace escolapp://...</div>
+    </div>
+
+    <div style="display:flex;align-items:center;gap:10px;margin:12px 0">
+      <hr style="flex:1;border:none;border-top:1px solid var(--border)">
+      <span style="font-size:11px;color:var(--text3)">o si ya tienes la misma config Firebase</span>
+      <hr style="flex:1;border:none;border-top:1px solid var(--border)">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Código corto (6 caracteres)</label>
+      <input class="form-input" id="joinCodeShort"
+        placeholder="ABC123"
+        style="text-transform:uppercase;letter-spacing:6px;font-size:22px;text-align:center"
+        maxlength="6"
+        oninput="this.value=this.value.toUpperCase()">
+      <div class="form-hint">Solo funciona si ya tienes las credenciales Firebase configuradas en ⚙️.</div>
+    </div>
+
+    <div id="joinFeedback" style="display:none;margin-bottom:12px"></div>
+
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-secondary" onclick="closeDrawer()">Cancelar</button>
+      <button class="btn btn-primary" onclick="joinBoard()">🔗 Unirse</button>
+    </div>
+  `);
+}
+
+function joinBoard() {
+  const tokenRaw = document.getElementById('joinToken')?.value.trim() || '';
+  const shortCode = document.getElementById('joinCodeShort')?.value.trim().toUpperCase() || '';
+  const fb = document.getElementById('joinFeedback');
+
+  // ── Opción A: token inteligente (largo) ─────────────────────
+  if (tokenRaw.length > 20) {
+    // Extraer el token si viene como esquema escolapp://invite/TOKEN
+    let token = tokenRaw;
+    const schemeMatch = tokenRaw.match(/escolapp:\/\/invite\/([A-Za-z0-9\-_]+)/);
+    const urlMatch    = tokenRaw.match(/[?&]t=([A-Za-z0-9\-_]+)/);
+    if (schemeMatch) token = schemeMatch[1];
+    else if (urlMatch) token = urlMatch[1];
+
+    const payload = parseInviteToken(token);
+    if (!payload || payload.v !== 1) {
+      showJoinFeedback('error', '❌ Token inválido o corrupto. Pide uno nuevo al administrador.');
+      return;
+    }
+
+    // Configurar Firebase automáticamente si no está configurado
+    const fbEmpty = !S.firebase.apiKey;
+    if (fbEmpty && payload.fb?.k) {
+      S.firebase.apiKey     = payload.fb.k || '';
+      S.firebase.authDomain = payload.fb.a || '';
+      S.firebase.projectId  = payload.fb.p || '';
+      S.firebase.appId      = payload.fb.i || '';
+      showJoinFeedback('ok', '✅ Configuración Firebase aplicada automáticamente.');
+    } else if (!fbEmpty && payload.fb?.p && S.firebase.projectId !== payload.fb.p) {
+      showJoinFeedback('warn',
+        '⚠️ Este token pertenece a un proyecto Firebase diferente al tuyo. ' +
+        'Si continúas, se actualizará tu configuración Firebase.');
+      // Guardar payload para confirmar
+      window._pendingJoinPayload = payload;
+      document.getElementById('joinToken').value = token;
+      // Cambiar botón a confirmar
+      const btn = document.querySelector('#drawer .btn-primary');
+      if (btn) { btn.textContent = '⚠️ Confirmar y unirse'; btn.onclick = confirmJoinWithDifferentFb; }
+      return;
+    }
+
+    applyJoinPayload(payload, true);
+    return;
+  }
+
+  // ── Opción B: código corto (requiere Firebase ya configurada) ─
+  if (shortCode.length === 6) {
+    if (!S.firebase.apiKey) {
+      showJoinFeedback('error',
+        '⚠️ El código corto requiere que ya tengas Firebase configurado en ⚙️ Configuración. ' +
+        'Pide al administrador el token completo.');
+      return;
+    }
+    const board = S.boards.find(b => b.inviteCode === shortCode);
+    if (!board) {
+      showJoinFeedback('error',
+        '❌ Código no encontrado. Verifica que tengas la misma config Firebase, o pide el token completo.');
+      return;
+    }
+    addMeToBoard(board, 'colaborador');
+    persist(); closeDrawer();
+    toast(`✅ Te uniste a "${board.name}"`);
+    renderBoards();
+    return;
+  }
+
+  showJoinFeedback('error', '⚠️ Pega el token completo o ingresa el código de 6 caracteres.');
+}
+
+function confirmJoinWithDifferentFb() {
+  const payload = window._pendingJoinPayload;
+  if (!payload) return;
+  S.firebase.apiKey     = payload.fb.k || '';
+  S.firebase.authDomain = payload.fb.a || '';
+  S.firebase.projectId  = payload.fb.p || '';
+  S.firebase.appId      = payload.fb.i || '';
+  delete window._pendingJoinPayload;
+  applyJoinPayload(payload, true);
+}
+
+function applyJoinPayload(payload, closeAfter) {
+  // Buscar si el tablero ya existe localmente
+  let board = S.boards.find(b => b.id === payload.b);
+  if (!board) {
+    // Crear tablero placeholder — se sincronizará con Firebase cuando se conecte
+    board = {
+      id: payload.b,
+      name: '(sincronizando...)',
+      type: 'escolar',
+      color: '#3d9fff',
+      emoji: '🎒',
+      inviteCode: '',
+      members: [],
+      _pendingSync: true,
+    };
+    S.boards.push(board);
+    S.cards[board.id] = [];
+  }
+  addMeToBoard(board, payload.r || 'colaborador');
+  persist();
+  if (closeAfter) closeDrawer();
+  toast(`✅ ¡Te uniste! ${board._pendingSync ? 'Sincronizando con Firebase...' : '"' + board.name + '"'}`);
+  renderBoards();
+}
+
+function addMeToBoard(board, role) {
+  if (!board.members) board.members = [];
+  const already = board.members.find(m => m.name === S.user.name);
+  if (!already) board.members.push({ name: S.user.name, role });
+}
+
+function showJoinFeedback(type, msg) {
+  const el = document.getElementById('joinFeedback');
+  if (!el) return;
+  const colors = { ok:'var(--accent2)', error:'var(--accent3)', warn:'var(--accent4)' };
+  const bg     = { ok:'rgba(0,229,160,0.08)', error:'rgba(255,107,107,0.08)', warn:'rgba(247,183,49,0.08)' };
+  el.style.display = 'block';
+  el.style.cssText += `;background:${bg[type]};border:1px solid ${colors[type]};border-radius:10px;padding:10px 13px;font-size:12px;color:${colors[type]};line-height:1.6`;
+  el.textContent = msg;
+}
+
+// Etiquetas legibles de roles
+const ROLE_LABELS = { admin:'Admin', colaborador:'Colaborador', lector:'Lector' };
+const ROLE_ICONS  = { admin:'🔑', colaborador:'✏️', lector:'👁️' };
+
+// ¿El usuario actual es admin en el tablero activo?
+function isMeAdmin(board) {
+  if (!board) return false;
+  const me = board.members.find(m => m.name === S.user.name);
+  return me?.role === 'admin';
+}
+
+function openBoardSettings(boardId) {
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b) return;
+  const isAdmin = isMeAdmin(b);
+
+  const membersHtml = b.members.map((m, idx) => {
+    const isMe = m.name === S.user.name;
+    const roleLabel = ROLE_LABELS[m.role] || m.role;
+    const roleIcon  = ROLE_ICONS[m.role]  || '👤';
+    // Admin puede cambiar el rol de cualquier miembro (menos a sí mismo si es el único admin)
+    const adminsCount = b.members.filter(x=>x.role==='admin').length;
+    const canChange = isAdmin && !(isMe && adminsCount === 1);
+    return `
+      <div class="member-row">
+        <div class="user-avatar" style="${isMe?'border:2px solid var(--accent)':''}">${m.name.charAt(0).toUpperCase()}</div>
+        <div class="member-info">
+          <div class="member-name">${m.name}${isMe?' <span style="font-size:10px;color:var(--accent)">(tú)</span>':''}</div>
+        </div>
+        ${canChange ? `
+          <select class="form-select" style="width:auto;font-size:11px;padding:4px 26px 4px 8px"
+            onchange="changeMemberRole('${boardId}',${idx},this.value)">
+            <option value="admin"    ${m.role==='admin'    ?'selected':''}>🔑 Admin</option>
+            <option value="colaborador" ${m.role==='colaborador'?'selected':''}>✏️ Colaborador</option>
+            <option value="lector"   ${m.role==='lector'   ?'selected':''}>👁️ Lector</option>
+          </select>
+          <div class="remitente-del" title="Quitar miembro" onclick="removeMember('${boardId}',${idx})">✕</div>
+        ` : `<div class="role-badge ${m.role}">${roleIcon} ${roleLabel}</div>`}
+      </div>`;
+  }).join('');
+
+  showDrawer(`⚙️ ${b.name}`, `
+    <div class="form-group">
+      <label class="form-label">Nombre del tablero</label>
+      <input class="form-input" id="bsName" value="${b.name}" ${isAdmin?'':'readonly'}>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Código de invitación</label>
+      <div class="invite-code-box">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px">
+          Comparte este código para que otros se unan al tablero:
+        </div>
+        <div class="invite-code">${b.inviteCode}</div>
+        <div class="invite-code-hint">Los nuevos miembros entran como <strong>Colaboradores</strong>. El admin puede cambiar su rol después.</div>
+        <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary btn-sm" onclick="copyInviteCode('${boardId}')">📋 Copiar token</button>
+          <button class="btn btn-secondary btn-sm" onclick="shareInvite('${boardId}')">📤 Compartir</button>
+          ${isAdmin?`<button class="btn btn-warning btn-sm" onclick="regenerateCode('${boardId}')">🔄 Nuevo código</button>`:''}
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Miembros del tablero (${b.members.length})</label>
+      <div style="font-size:11px;color:var(--text2);margin-bottom:8px">
+        🔑 Admin: gestiona todo · ✏️ Colaborador: crea y edita · 👁️ Lector: solo ve
+      </div>
+      <div class="cfg-section">${membersHtml}</div>
+      ${isAdmin?`<div class="help-tip" style="margin-top:8px">
+        <div class="help-tip-title">💡 Múltiples admins</div>
+        Puedes tener varios admins. Ideal para que papá y mamá administren juntos, o para que un estudiante mayor gestione su propio tablero mientras el padre también tiene control.
+      </div>`:''}
+    </div>
+
+    <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
+      ${isAdmin?`<button class="btn btn-danger" onclick="deleteBoard('${boardId}')">🗑️ Eliminar</button>`:''}
+      <button class="btn btn-ghost" onclick="leaveBoard('${boardId}')">🚪 Salir del tablero</button>
+      ${isAdmin?`<button class="btn btn-primary" onclick="saveBoardSettings('${boardId}')">Guardar</button>`:'<button class="btn btn-secondary" onclick="closeDrawer()">Cerrar</button>'}
+    </div>
+  `);
+}
+
+function changeMemberRole(boardId, idx, newRole) {
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b || !b.members[idx]) return;
+  const adminsCount = b.members.filter(m=>m.role==='admin').length;
+  // Evitar que el único admin se degrade a sí mismo
+  if (b.members[idx].name===S.user.name && newRole!=='admin' && adminsCount===1) {
+    toast('⚠️ Debes asignar otro admin antes de cambiar tu rol'); return;
+  }
+  b.members[idx].role = newRole;
+  persist();
+  toast(`✅ Rol actualizado a ${ROLE_LABELS[newRole]}`);
+  openBoardSettings(boardId); // refrescar drawer
+}
+
+function removeMember(boardId, idx) {
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b || !b.members[idx]) return;
+  const m = b.members[idx];
+  if (m.name === S.user.name) { toast('Usa "Salir del tablero" para salir tú mismo'); return; }
+  if (!confirm(`¿Quitar a ${m.name} del tablero?`)) return;
+  b.members.splice(idx, 1);
+  persist(); toast(`${m.name} fue quitado del tablero`);
+  openBoardSettings(boardId);
+}
+
+function leaveBoard(boardId) {
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b) return;
+  const adminsCount = b.members.filter(m=>m.role==='admin').length;
+  const me = b.members.find(m=>m.name===S.user.name);
+  if (me?.role==='admin' && adminsCount===1) {
+    toast('⚠️ Asigna otro admin antes de salir'); return;
+  }
+  if (!confirm(`¿Salir del tablero "${b.name}"?`)) return;
+  b.members = b.members.filter(m=>m.name!==S.user.name);
+  if (S.activeBoardId===boardId) S.activeBoardId=null;
+  persist(); closeDrawer(); renderBoards();
+  toast('Saliste del tablero');
+}
+
+function regenerateCode(boardId) {
+  if (!confirm('¿Generar un nuevo código? El anterior dejará de funcionar.')) return;
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b) return;
+  b.inviteCode = invCode();
+  persist(); toast('🔄 Nuevo código generado');
+  openBoardSettings(boardId);
+}
+
+function copyInviteCode(boardId) {
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b) return;
+  const token = buildInviteToken(boardId);
+  if (!token) { toast('⚠️ Configura Firebase primero en ⚙️'); return; }
+  navigator.clipboard?.writeText(token)
+    .then(() => toast('📋 Token copiado — pégalo en WhatsApp'))
+    .catch(() => toast('⚠️ No se pudo copiar. Usa "Compartir".'));
+}
+
+function shareInvite(boardId) {
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b) return;
+
+  const token = buildInviteToken(boardId);
+  if (!token) {
+    toast('⚠️ Configura Firebase en ⚙️ antes de compartir');
+    return;
+  }
+
+  // Mostrar preview del token antes de compartir
+  showDrawer('📤 Compartir invitación', `
+    <div style="font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.6">
+      Comparte este token con quien quieras invitar al tablero <strong>${b.name}</strong>.
+      Al pegarlo en EscolApp, <strong>la app se configura automáticamente</strong> — no necesitan hacer nada más.
+    </div>
+
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Token de invitación</div>
+      <div style="font-size:11px;font-family:monospace;color:var(--accent2);word-break:break-all;line-height:1.6">${token}</div>
+    </div>
+
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:14px">
+      <div style="font-size:10px;color:var(--text3);margin-bottom:6px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px">Código corto (si ya tienen Firebase)</div>
+      <div style="font-size:28px;font-family:monospace;font-weight:700;letter-spacing:8px;color:var(--accent);text-align:center;padding:8px 0">${b.inviteCode}</div>
+    </div>
+
+    <div style="background:rgba(0,229,160,0.07);border:1px solid rgba(0,229,160,0.2);border-radius:10px;padding:12px;margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6">
+      <strong style="color:var(--accent2)">💡 ¿Cómo lo usa quien recibe?</strong><br>
+      1. Instala EscolApp en su celular<br>
+      2. En la primera pantalla configura su nombre y rol<br>
+      3. En Inicio → "Unirse con código" → pega el token<br>
+      4. ¡Listo! Ve el tablero automáticamente.
+    </div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="doShare('${b.name}','${token}','${b.inviteCode}')">
+        📱 Compartir por WhatsApp
+      </button>
+      <button class="btn btn-secondary" onclick="doCopyToken('${token}')">
+        📋 Copiar token
+      </button>
+    </div>
+  `);
+}
+
+function doShare(boardName, token, shortCode) {
+  const text =
+`🎒 *EscolApp — Invitación al tablero "${boardName}"*
+
+Pega este token en EscolApp → Inicio → "Unirse con código":
+
+\`${token}\`
+
+_(Código corto si ya tienes Firebase configurado: *${shortCode}*)_
+
+👉 La app se configura sola al pegar el token.`;
+
+  if (navigator.share) {
+    navigator.share({ title: `EscolApp — ${boardName}`, text }).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(text)
+      .then(() => toast('📋 Texto de invitación copiado'))
+      .catch(() => toast('⚠️ No se pudo copiar'));
+  }
+}
+
+function doCopyToken(token) {
+  navigator.clipboard?.writeText(token)
+    .then(() => toast('📋 Token copiado'))
+    .catch(() => toast('⚠️ No se pudo copiar'));
+}
+function saveBoardSettings(boardId) {
+  const b = S.boards.find(x=>x.id===boardId);
+  if (!b) return;
+  b.name = document.getElementById('bsName')?.value.trim()||b.name;
+  persist(); closeDrawer(); renderBoards(); toast('Guardado ✅');
+}
+function deleteBoard(boardId) {
+  if (!confirm('¿Eliminar este tablero y todas sus tarjetas?')) return;
+  S.boards = S.boards.filter(b=>b.id!==boardId);
+  delete S.cards[boardId];
+  if (S.activeBoardId===boardId) S.activeBoardId=null;
+  persist(); closeDrawer(); renderBoards();
+}
+
+// ============================================================
+// KANBAN
+// ============================================================
+function filterCat(el, cat) {
+  document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  S.catFilter = cat;
+  renderKanban();
+}
+function renderKanban() {
+  const board = activeBoard();
+  if (!board) { goScreen('boards'); return; }
+  const el = document.getElementById('kanbanBoard');
+  let cards = boardCards();
+  if (S.catFilter !== 'all') cards = cards.filter(c=>c.category===S.catFilter);
+  el.innerHTML = '';
+  COLS.forEach(col => {
+    const cc = cards.filter(c=>c.status===col.id);
+    const div = document.createElement('div');
+    div.className = 'k-col';
+    div.innerHTML = `
+      <div class="k-col-header">
+        <div class="k-col-title"><div class="k-dot" style="background:${col.color}"></div>${col.emoji} ${col.label}</div>
+        <div class="k-count">${cc.length}</div>
+      </div>
+      <div class="k-cards">
+        ${cc.length===0?'<div class="k-empty">Sin tarjetas</div>':''}
+        ${cc.map(card=>renderCard(card)).join('')}
+      </div>
+    `;
+    el.appendChild(div);
+  });
+  updateNavBadge();
+}
+function renderCard(card) {
+  const cat = catInfo(card.category);
+  const days = daysUntil(card.dueDate);
+  let dueClass='', dueLabel='';
+  if (card.dueDate) {
+    if (days<0){dueClass='urgent';dueLabel=`Venció hace ${Math.abs(days)}d`;}
+    else if (days===0){dueClass='urgent';dueLabel='Vence hoy';}
+    else if (days<=2){dueClass='soon';dueLabel=`Vence en ${days}d`;}
+    else{dueLabel=fmtDate(card.dueDate);}
+  }
+  return `
+    <div class="kcard" style="--cc:${cat.color}" onclick="openCardDetail('${card.id}')">
+      <div class="kcard-top">
+        <div class="kcard-cat">${cat.emoji} ${cat.label}</div>
+        ${card.isNew?'<div class="kcard-new">NUEVO</div>':''}
+      </div>
+      <div class="kcard-title">${card.title}</div>
+      <div class="kcard-tags">
+        ${card.subject?`<div class="kcard-tag">📖 ${card.subject}</div>`:''}
+        ${card.teacher?`<div class="kcard-tag">👤 ${card.teacher}</div>`:''}
+      </div>
+      <div class="kcard-footer">
+        <div class="kcard-due ${dueClass}">${dueLabel?'📅 '+dueLabel:''}</div>
+        ${card.aiSuggested?'<div class="kcard-ai">✨ IA</div>':''}
+      </div>
+    </div>
+  `;
+}
+
+// ============================================================
+// CARD CRUD
+// ============================================================
+function openAddCard(prefill={}) {
+  S.editingCardId = null;
+  const hasAI = !!prefill.aiCategory;
+  showDrawer('Nueva tarjeta', `
+    ${hasAI?`<div class="ai-box" id="aiBox">
+      <div class="ai-box-title">✨ Sugerencia de Gemini IA</div>
+      <div class="ai-box-text">El asunto sugiere esta clasificación. Puedes cambiarla:</div>
+      <div class="ai-chips">${CATS.map(c=>`<div class="ai-chip ${prefill.aiCategory===c.id?'applied':''}" onclick="applyAiCat('${c.id}',this)">${c.emoji} ${c.label}</div>`).join('')}</div>
+      ${prefill.extractedInfo?`<div style="margin-top:8px;font-size:11px;color:var(--text2)">IA también detectó: ${prefill.extractedInfo}</div>`:''}
+    </div>`:''}
+    <div class="form-group">
+      <label class="form-label">Título *</label>
+      <input class="form-input" id="cTitle" placeholder="Descripción del mensaje" value="${prefill.title||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Categoría</label>
+      <div class="cat-chips" id="catChips">
+        ${CATS.map(c=>`<div class="cat-chip ${(prefill.aiCategory||'Otro')===c.id?'sel':''}" style="background:${c.color}22;color:${c.color}" data-cat="${c.id}" onclick="selCat(this)">${c.emoji} ${c.label}</div>`).join('')}
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Asignatura</label>
+      <input class="form-input" id="cSubject" placeholder="Ej: Matemáticas" value="${prefill.subject||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Docente</label>
+      <input class="form-input" id="cTeacher" placeholder="Nombre del profesor" value="${prefill.teacher||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Fecha límite</label>
+      <input class="form-input" type="date" id="cDue" value="${prefill.dueDate||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notas / Descripción</label>
+      <textarea class="form-input" id="cNotes" placeholder="Detalles, instrucciones, materiales...">${prefill.notes||''}</textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Enlace a Phidias</label>
+      <input class="form-input" type="url" id="cLink" placeholder="https://..." value="${prefill.link||''}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Estado inicial</label>
+      <div class="status-chips" id="stChips">
+        ${COLS.map((s,i)=>`<div class="status-chip ${i===0?'sel':''}" data-st="${s.id}" onclick="selSt(this)">${s.emoji} ${s.label}</div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-secondary" onclick="closeDrawer()">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveCard()">Crear tarjeta</button>
+    </div>
+  `);
+}
+
+function applyAiCat(catId, el) {
+  document.querySelectorAll('.ai-chip').forEach(c=>c.classList.remove('applied'));
+  el.classList.add('applied');
+  document.querySelectorAll('#catChips .cat-chip').forEach(c=>c.classList.toggle('sel', c.dataset.cat===catId));
+}
+function selCat(el) { document.querySelectorAll('#catChips .cat-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+function selSt(el) { document.querySelectorAll('#stChips .status-chip').forEach(c=>c.classList.remove('sel')); el.classList.add('sel'); }
+
+function saveCard() {
+  const title = document.getElementById('cTitle')?.value.trim();
+  if (!title) { toast('El título es obligatorio'); return; }
+  const catEl = document.querySelector('#catChips .cat-chip.sel');
+  const stEl = document.querySelector('#stChips .status-chip.sel');
+  const card = {
+    id: S.editingCardId || uid(),
+    title,
+    category: catEl?.dataset.cat||'Otro',
+    subject: document.getElementById('cSubject')?.value.trim()||'',
+    teacher: document.getElementById('cTeacher')?.value.trim()||'',
+    dueDate: document.getElementById('cDue')?.value||'',
+    notes: document.getElementById('cNotes')?.value.trim()||'',
+    link: document.getElementById('cLink')?.value.trim()||'',
+    status: stEl?.dataset.st||'nuevo',
+    isNew: !S.editingCardId,
+    aiSuggested: false,
+    createdAt: new Date().toISOString(),
+  };
+  if (!S.cards[S.activeBoardId]) S.cards[S.activeBoardId]=[];
+  if (S.editingCardId) {
+    const idx = S.cards[S.activeBoardId].findIndex(c=>c.id===S.editingCardId);
+    if (idx>=0) S.cards[S.activeBoardId][idx] = {...S.cards[S.activeBoardId][idx], ...card, isNew:false};
+    toast('Tarjeta actualizada ✅');
+  } else {
+    S.cards[S.activeBoardId].unshift(card);
+    toast('Tarjeta creada ✅');
+  }
+  persist(); closeDrawer(); renderKanban();
+}
+
+function openCardDetail(cardId) {
+  if (!S.activeBoardId) return;
+  const cards = S.cards[S.activeBoardId]||[];
+  const card = cards.find(c=>c.id===cardId);
+  if (!card) return;
+  card.isNew = false; persist();
+  const cat = catInfo(card.category);
+  const days = daysUntil(card.dueDate);
+  let dueLabel = card.dueDate ? fmtDate(card.dueDate) : '—';
+  if (days!==null) {
+    if (days<0) dueLabel+=` (venció hace ${Math.abs(days)} día${Math.abs(days)!==1?'s':''})`;
+    else if (days===0) dueLabel+=' (hoy ⚠️)';
+    else dueLabel+=` (en ${days} día${days!==1?'s':''})`;
+  }
+  const colInfo = COLS.find(c=>c.id===card.status);
+  showDrawer(`${cat.emoji} ${cat.label}`, `
+    <div style="font-size:17px;font-weight:700;font-family:'Syne',sans-serif;line-height:1.3;margin-bottom:12px;color:${cat.color}">${card.title}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px">
+      ${colInfo?`<div style="font-size:11px;background:var(--bg3);padding:3px 10px;border-radius:99px;color:var(--text2)">${colInfo.emoji} ${colInfo.label}</div>`:''}
+      ${card.aiSuggested?'<div style="font-size:11px;background:rgba(0,229,160,0.1);padding:3px 10px;border-radius:99px;color:var(--accent2)">✨ Clasificado por IA</div>':''}
+    </div>
+    <hr class="divider" style="margin-bottom:14px">
+    ${card.subject?`<div style="margin-bottom:12px"><div class="form-label">Asignatura</div><div style="font-size:14px">📖 ${card.subject}</div></div>`:''}
+    ${card.teacher?`<div style="margin-bottom:12px"><div class="form-label">Docente</div><div style="font-size:14px">👤 ${card.teacher}</div></div>`:''}
+    <div style="margin-bottom:12px"><div class="form-label">Fecha límite</div><div style="font-size:14px">📅 ${dueLabel}</div></div>
+    ${card.notes?`<div style="margin-bottom:12px"><div class="form-label">Notas</div><div style="font-size:13px;color:var(--text2);line-height:1.6">${card.notes}</div></div>`:''}
+    ${card.link?`<div style="margin-bottom:12px"><div class="form-label">Enlace Phidias</div><a href="${card.link}" target="_blank" style="color:var(--accent);font-size:13px;text-decoration:none">🔗 Abrir en Phidias ↗</a></div>`:''}
+    <hr class="divider" style="margin:14px 0">
+    <div style="margin-bottom:14px">
+      <div class="form-label">Cambiar estado</div>
+      <div class="status-chips">
+        ${COLS.map(s=>`<div class="status-chip ${card.status===s.id?'sel':''}" onclick="quickChangeStatus('${cardId}','${s.id}',this)">${s.emoji} ${s.label}</div>`).join('')}
+      </div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-secondary" onclick="editCard('${cardId}')">✏️ Editar</button>
+      <button class="btn btn-danger" onclick="deleteCard('${cardId}')">🗑️ Eliminar</button>
+    </div>
+  `);
+}
+
+function quickChangeStatus(cardId, status, el) {
+  document.querySelectorAll('#drawer .status-chip').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  const cards = S.cards[S.activeBoardId]||[];
+  const card = cards.find(c=>c.id===cardId);
+  if (card) { card.status=status; persist(); renderKanban(); toast('Estado actualizado ✅'); }
+}
+
+function editCard(cardId) {
+  const cards = S.cards[S.activeBoardId]||[];
+  const card = cards.find(c=>c.id===cardId);
+  if (!card) return;
+  S.editingCardId = cardId;
+  closeDrawer();
+  setTimeout(()=>{
+    showDrawer('Editar tarjeta', `
+      <div class="form-group"><label class="form-label">Título *</label><input class="form-input" id="cTitle" value="${card.title}"></div>
+      <div class="form-group"><label class="form-label">Categoría</label>
+        <div class="cat-chips" id="catChips">${CATS.map(c=>`<div class="cat-chip ${card.category===c.id?'sel':''}" style="background:${c.color}22;color:${c.color}" data-cat="${c.id}" onclick="selCat(this)">${c.emoji} ${c.label}</div>`).join('')}</div>
+      </div>
+      <div class="form-group"><label class="form-label">Asignatura</label><input class="form-input" id="cSubject" value="${card.subject||''}"></div>
+      <div class="form-group"><label class="form-label">Docente</label><input class="form-input" id="cTeacher" value="${card.teacher||''}"></div>
+      <div class="form-group"><label class="form-label">Fecha límite</label><input class="form-input" type="date" id="cDue" value="${card.dueDate||''}"></div>
+      <div class="form-group"><label class="form-label">Notas</label><textarea class="form-input" id="cNotes">${card.notes||''}</textarea></div>
+      <div class="form-group"><label class="form-label">Enlace Phidias</label><input class="form-input" type="url" id="cLink" value="${card.link||''}"></div>
+      <div class="form-group"><label class="form-label">Estado</label>
+        <div class="status-chips" id="stChips">${COLS.map(s=>`<div class="status-chip ${card.status===s.id?'sel':''}" data-st="${s.id}" onclick="selSt(this)">${s.emoji} ${s.label}</div>`).join('')}</div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:16px">
+        <button class="btn btn-secondary" onclick="closeDrawer()">Cancelar</button>
+        <button class="btn btn-primary" onclick="saveCard()">Guardar</button>
+      </div>
+    `);
+  }, 280);
+}
+
+function deleteCard(cardId) {
+  if (!confirm('¿Eliminar esta tarjeta?')) return;
+  S.cards[S.activeBoardId] = (S.cards[S.activeBoardId]||[]).filter(c=>c.id!==cardId);
+  persist(); closeDrawer(); renderKanban(); toast('Tarjeta eliminada');
+}
+
+// ============================================================
+// GEMINI AI CLASSIFICATION
+// ============================================================
+async function classifyWithGemini(subject) {
+  if (!S.geminiKey) return classifyWithRules(subject);
+  try {
+    const prompt = `Eres un asistente que clasifica mensajes escolares de colegios colombianos.
+
+Analiza este asunto de correo y responde SOLO con un JSON sin markdown:
+{
+  "categoria": "Tarea|Material|Informativo|Citacion|Evento|Otro",
+  "asignatura": "nombre o vacío",
+  "fecha_detectada": "YYYY-MM-DD o vacío",
+  "info_extra": "resumen breve de lo detectado"
+}
+
+Asunto: "${subject}"
+
+Categorías:
+- Tarea: trabajos, ejercicios, actividades para entregar
+- Material: solicitud de útiles, materiales, elementos físicos
+- Informativo: circulares, avisos, comunicados sin acción requerida
+- Citacion: reuniones, citas, llamados a padres
+- Evento: izadas, festivales, excursiones, actos`;
+
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${S.geminiKey}`, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({contents:[{parts:[{text:prompt}]}], generationConfig:{temperature:0.1,maxOutputTokens:200}})
+    });
+    if (!res.ok) throw new Error('API error');
+    const data = await res.json();
+    const text = data.candidates?.[0]?.content?.parts?.[0]?.text||'';
+    const clean = text.replace(/```json?/g,'').replace(/```/g,'').trim();
+    const parsed = JSON.parse(clean);
+    return {
+      category: parsed.categoria||'Otro',
+      subject: parsed.asignatura||'',
+      dueDate: parsed.fecha_detectada||'',
+      extractedInfo: parsed.info_extra||''
+    };
+  } catch(e) {
+    return classifyWithRules(subject);
+  }
+}
+
+function classifyWithRules(subject) {
+  const s = subject.toLowerCase();
+  let category = 'Otro', subj='', dueDate='';
+  if (/tarea|trabajo|ejercicio|actividad|entregar|presentar|resolver/.test(s)) category='Tarea';
+  else if (/traer|comprar|material|útil|cuaderno|colores|tijera|cartulina|carpeta|elementos/.test(s)) category='Material';
+  else if (/reunión|citación|cita|llamado|convocatoria|padres de familia/.test(s)) category='Citacion';
+  else if (/izada|festival|excursión|salida|evento|celebración|acto|semana/.test(s)) category='Evento';
+  else if (/circular|aviso|comunicado|información|informe|nota/.test(s)) category='Informativo';
+  const matMap = {matematica:'Matemáticas',ingles:'Inglés',español:'Español',ciencias:'Ciencias',sociales:'Sociales',arte:'Arte',musica:'Música',educacion:'Educación Física'};
+  for (const [k,v] of Object.entries(matMap)) if (s.includes(k)) { subj=v; break; }
+  const lunes=/lunes/.test(s), viernes=/viernes/.test(s), manana=/mañana/.test(s);
+  if (manana) { const d=new Date(); d.setDate(d.getDate()+1); dueDate=d.toISOString().slice(0,10); }
+  return {category, subject:subj, dueDate, extractedInfo:''};
+}
+
+// ============================================================
+// SYNC / GMAIL
+// ============================================================
+function renderSync() {
+  const board = activeBoard();
+  if (!board || board.type!=='escolar') {
+    document.getElementById('gmailStatusText').innerHTML = '<span style="color:var(--accent3)">⚠️ La sincronización Gmail solo está disponible en tableros de tipo Escolar.</span>';
+    document.getElementById('gmailConnectBtn').style.display='none';
+    document.getElementById('syncActionsBlock').style.display='none';
+    return;
+  }
+  document.getElementById('gmailConnectBtn').style.display='';
+  if (S.gmail.connected && S.gmail.email) {
+    document.getElementById('gmailStatusText').innerHTML = `<span style="color:var(--accent2)">✅ Conectado como ${S.gmail.email}</span>`;
+    document.getElementById('gmailConnectBtn').textContent = 'Reconectar';
+    document.getElementById('syncActionsBlock').style.display='block';
+  } else {
+    document.getElementById('gmailStatusText').innerHTML = '<span style="color:var(--text3)">No conectado. Configura tu correo en ⚙️ Configuración.</span>';
+    document.getElementById('gmailConnectBtn').textContent = 'Conectar Gmail';
+    document.getElementById('syncActionsBlock').style.display='none';
+  }
+  renderPending();
+}
+
+function connectGmail() {
+  if (!S.gmail.email) { toast('Configura tu correo en ⚙️ Configuración'); return; }
+  S.gmail.connected = true; persist();
+  renderSync(); toast('✅ Gmail conectado');
+}
+
+function addSyncLog(msg, type='info') {
+  const log = document.getElementById('syncLog');
+  log.style.display='block';
+  const icons={ok:'✓',err:'✗',info:'›'};
+  log.innerHTML += `<div class="log-${type}">${icons[type]} ${msg}</div>`;
+  log.scrollTop=log.scrollHeight;
+}
+
+async function runSync() {
+  if (S.gmail.remitentes.length===0) { toast('Configura remitentes del colegio en ⚙️'); return; }
+  const btn=document.getElementById('runSyncBtn');
+  const txt=document.getElementById('runSyncTxt');
+  btn.disabled=true; txt.innerHTML='<span class="spinner"></span> Buscando...';
+  document.getElementById('syncLog').innerHTML=''; document.getElementById('syncLog').style.display='none';
+
+  await delay(500);
+  addSyncLog(`Conectando a Gmail (${S.gmail.email})...`,'info');
+  await delay(700);
+  addSyncLog(`Filtrando por: ${S.gmail.remitentes.join(', ')}`,'info');
+  await delay(900);
+
+  const pool = [
+    'Tarea de Matemáticas - Fracciones capítulo 7',
+    'Traer materiales: cartulina, colores y pegante',
+    'Reunión de padres de familia - Segundo periodo',
+    'Semana Cultural 2026 - Programa de actividades',
+    'Actividad Afrocolombianidad - Presentación grupal',
+    'Circular informativa: horario de recuperaciones',
+    'Traer cuaderno de Ciencias Naturales forrado',
+    'Trabajo escrito sobre independencia de Colombia',
+    'Citación directora de grupo - Asunto académico',
+    'Izada de bandera - Viernes 7am obligatorio',
+  ];
+  const existing = (S.cards[S.activeBoardId]||[]).map(c=>c.title);
+  const newMsgs = pool.filter(p=>!existing.includes(p)).slice(0, 2+Math.floor(Math.random()*3));
+
+  if (newMsgs.length===0) {
+    addSyncLog('No hay mensajes nuevos del colegio.','ok');
+    btn.disabled=false; txt.textContent='🔍 Buscar mensajes';
+    toast('Sin mensajes nuevos');
+    return;
+  }
+
+  addSyncLog(`${newMsgs.length} mensaje(s) nuevo(s) encontrado(s)`,'ok');
+  addSyncLog(S.geminiKey ? 'Clasificando con Gemini IA...' : 'Clasificando con reglas locales...','info');
+
+  const results = [];
+  for (const msg of newMsgs) {
+    const r = await classifyWithGemini(msg);
+    results.push({id:uid(), subject:msg, ...r, from:S.gmail.remitentes[0], date:new Date().toISOString(), link:S.phidias.url||''});
+    await delay(S.geminiKey?600:100);
+  }
+
+  addSyncLog(`${S.geminiKey?'Gemini':'Reglas'}: clasificación completada ✓`,'ok');
+  S.pendingEmails = results;
+  btn.disabled=false; txt.textContent='🔍 Buscar mensajes';
+  updateNavBadge(); renderPending();
+}
+
+function renderPending() {
+  const sec = document.getElementById('pendingSection');
+  const list = document.getElementById('pendingList');
+  if (S.pendingEmails.length===0) { sec.style.display='none'; return; }
+  sec.style.display='block';
+  list.innerHTML = S.pendingEmails.map(e=>`
+    <div class="pending-item" onclick="convertEmail('${e.id}')">
+      <div class="pending-emoji">${catInfo(e.category).emoji}</div>
+      <div class="pending-content">
+        <div class="pending-subject">${e.subject}</div>
+        <div class="pending-meta">
+          ${e.subject_label||e.subject_name?`📖 ${e.subject||''}  ·  `:''}
+          ${new Date(e.date).toLocaleDateString('es-CO')}
+          ${e.extractedInfo?` · ${e.extractedInfo}`:''}
+        </div>
+      </div>
+      <div class="pending-cat">${e.category}</div>
+    </div>
+  `).join('');
+  updateNavBadge();
+}
+
+async function convertEmail(emailId) {
+  const email = S.pendingEmails.find(e=>e.id===emailId);
+  if (!email) return;
+  S.pendingEmails = S.pendingEmails.filter(e=>e.id!==emailId);
+  openAddCard({
+    title: email.subject,
+    aiCategory: email.category,
+    subject: email.subject_name||email.subject||'',
+    dueDate: email.dueDate||'',
+    link: email.link||'',
+    notes: `Importado de Gmail · ${new Date(email.date).toLocaleDateString('es-CO')}`,
+    extractedInfo: email.extractedInfo,
+  });
+  renderPending(); updateNavBadge();
+}
+
+function updateNavBadge() {
+  const b = document.getElementById('navSyncBadge');
+  if (S.pendingEmails.length>0) { b.textContent=S.pendingEmails.length; b.classList.add('show'); }
+  else { b.classList.remove('show'); }
+  document.getElementById('syncDot').classList.toggle('show', S.pendingEmails.length>0);
+}
+
+// ============================================================
+// CONFIG
+// ============================================================
+function renderConfig() {
+  document.getElementById('cfgName').value = S.user.name||'';
+  document.getElementById('cfgRole').value = S.user.role||'admin';
+  document.getElementById('cfgFbKey2').value = S.firebase.apiKey||'';
+  document.getElementById('cfgFbAuth2').value = S.firebase.authDomain||'';
+  document.getElementById('cfgFbProj2').value = S.firebase.projectId||'';
+  document.getElementById('cfgFbAppId2').value = S.firebase.appId||'';
+  document.getElementById('cfgGemKey2').value = S.geminiKey||'';
+  document.getElementById('cfgGmailEmail').value = S.gmail.email||'';
+  document.getElementById('cfgGmailPass').value = S.gmail.pass||'';
+  document.getElementById('cfgPhUrl').value = S.phidias.url||'';
+  document.getElementById('cfgPhUser').value = S.phidias.user||'';
+  document.getElementById('cfgPhPass').value = S.phidias.pass||'';
+  document.getElementById('tglNotif').classList.toggle('on', S.prefs.notif);
+  document.getElementById('tglAutoSync').classList.toggle('on', S.prefs.autoSync);
+  renderRems();
+}
+function renderRems() {
+  const el = document.getElementById('remitenteList2');
+  el.innerHTML = S.gmail.remitentes.length===0
+    ? '<div style="font-size:12px;color:var(--text3);padding:4px 0">Ningún remitente configurado</div>'
+    : S.gmail.remitentes.map((r,i)=>`
+        <div class="remitente-item">
+          <span class="remitente-email">📬 ${r}</span>
+          <div class="remitente-del" onclick="delRem(${i})">✕</div>
+        </div>`).join('');
+}
+function addRem2() {
+  const v = document.getElementById('newRem2').value.trim().toLowerCase();
+  if (!v) return;
+  if (S.gmail.remitentes.includes(v)) { toast('Ya está en la lista'); return; }
+  S.gmail.remitentes.push(v);
+  document.getElementById('newRem2').value='';
+  renderRems();
+}
+function delRem(i) { S.gmail.remitentes.splice(i,1); renderRems(); }
+function tgl(key) {
+  S.prefs[key]=!S.prefs[key];
+  document.getElementById('tgl'+key.charAt(0).toUpperCase()+key.slice(1)).classList.toggle('on',S.prefs[key]);
+  if (key==='notif'&&S.prefs[key]) Notification?.requestPermission();
+}
+function saveConfig() {
+  S.user.name = document.getElementById('cfgName').value.trim();
+  S.user.role = document.getElementById('cfgRole').value;
+  S.firebase.apiKey = document.getElementById('cfgFbKey2').value.trim();
+  S.firebase.authDomain = document.getElementById('cfgFbAuth2').value.trim();
+  S.firebase.projectId = document.getElementById('cfgFbProj2').value.trim();
+  S.firebase.appId = document.getElementById('cfgFbAppId2').value.trim();
+  S.geminiKey = document.getElementById('cfgGemKey2').value.trim();
+  S.gmail.email = document.getElementById('cfgGmailEmail').value.trim();
+  S.gmail.pass = document.getElementById('cfgGmailPass').value;
+  S.phidias.url = document.getElementById('cfgPhUrl').value.trim();
+  S.phidias.user = document.getElementById('cfgPhUser').value.trim();
+  S.phidias.pass = document.getElementById('cfgPhPass').value;
+  persist(); updateUserAvatar(); toast('✅ Configuración guardada');
+}
+function doReset() {
+  if (!confirm('¿Borrar todos tus datos locales? Esto no afecta Firebase.')) return;
+  localStorage.clear(); location.reload();
+}
+
+// ============================================================
+// AYUDA
+// ============================================================
+const HELP_ITEMS = [
+  {
+    icon:'🚀', title:'Primeros pasos — Configuración inicial',
+    body:`
+      <div style="padding-top:12px">
+        <div class="help-step"><div class="help-step-num">1</div><div class="help-step-text"><div class="help-step-title">Crear proyecto Firebase</div>Ve a <a class="help-link" href="https://console.firebase.google.com" target="_blank">console.firebase.google.com ↗</a> y crea un proyecto llamado <strong>EscolApp</strong>.</div></div>
+        <div class="help-step"><div class="help-step-num">2</div><div class="help-step-text"><div class="help-step-title">Obtener credenciales</div>⚙️ Configuración del proyecto → Tus apps → ícono &lt;/&gt; → Copiar el objeto <strong>firebaseConfig</strong>.</div></div>
+        <div class="help-step"><div class="help-step-num">3</div><div class="help-step-text"><div class="help-step-title">Activar Authentication</div>Menú lateral → Authentication → Google → Activar.</div></div>
+        <div class="help-step"><div class="help-step-num">4</div><div class="help-step-text"><div class="help-step-title">Activar Firestore</div>Menú lateral → Firestore Database → Crear → Modo producción → región <strong>us-east1</strong>.</div></div>
+        <div class="help-step"><div class="help-step-num">5</div><div class="help-step-text"><div class="help-step-title">Pegar credenciales en la app</div>Ve a ⚙️ Configuración → sección Firebase → pega cada valor.</div></div>
+        <div class="help-tip"><div class="help-tip-title">💡 ¿Para qué sirve Firebase?</div>Es la base de datos que permite que todos los miembros de la familia vean el mismo tablero en tiempo real. Cada familia usa su propio proyecto — tus datos son 100% privados.</div>
+      </div>`
+  },
+  {
+    icon:'🤖', title:'Gemini IA — Clasificación automática',
+    body:`
+      <div style="padding-top:12px">
+        <p style="margin-bottom:10px">Gemini analiza el asunto de cada correo del colegio y sugiere automáticamente la categoría, asignatura y fecha límite.</p>
+        <div class="help-step"><div class="help-step-num">1</div><div class="help-step-text"><div class="help-step-title">Obtener API Key gratis</div>Ve a <a class="help-link" href="https://aistudio.google.com/app/apikey" target="_blank">aistudio.google.com ↗</a> → "Create API Key" → copiar.</div></div>
+        <div class="help-step"><div class="help-step-num">2</div><div class="help-step-text"><div class="help-step-title">Pegar en la app</div>⚙️ Configuración → sección Gemini IA → pegar la clave → Guardar.</div></div>
+        <div class="help-tip"><div class="help-tip-title">💡 Límites gratuitos</div>1,500 solicitudes/día gratuitas. Con 20 mensajes diarios del colegio, nunca pagarás nada. Sin tarjeta de crédito requerida.</div>
+      </div>`
+  },
+  {
+    icon:'📧', title:'Sincronización Gmail — Correos de Phidias',
+    body:`
+      <div style="padding-top:12px">
+        <p style="margin-bottom:10px">Phidias envía notificaciones al correo cuando hay mensajes nuevos. EscolApp las detecta y crea tarjetas automáticamente.</p>
+        <div class="help-step"><div class="help-step-num">1</div><div class="help-step-text"><div class="help-step-title">Configurar remitentes</div>⚙️ Configuración → Remitentes del colegio → Agrega el correo desde el que llegan las notificaciones (ej: <strong>noreply@colegio.phidias.co</strong>). Lo encuentras en Gmail buscando correos de Phidias.</div></div>
+        <div class="help-step"><div class="help-step-num">2</div><div class="help-step-text"><div class="help-step-title">Contraseña de aplicación Gmail</div>Tu cuenta Google debe tener verificación en 2 pasos activa. Luego ve a <a class="help-link" href="https://myaccount.google.com/apppasswords" target="_blank">Contraseñas de app ↗</a> → Crear → copia la contraseña de 16 caracteres.</div></div>
+        <div class="help-step"><div class="help-step-num">3</div><div class="help-step-text"><div class="help-step-title">Conectar y sincronizar</div>🔄 Sincronizar → Conectar Gmail → Buscar mensajes. Gemini clasificará cada correo y verás los mensajes para convertir en tarjetas.</div></div>
+        <div class="help-tip"><div class="help-tip-title">⚠️ Importante</div>Los correos de Phidias solo contienen el asunto y un enlace. El cuerpo completo del mensaje está en la plataforma Phidias. Usa el enlace en la tarjeta para leer el detalle.</div>
+      </div>`
+  },
+  {
+    icon:'👨‍👩‍👧', title:'Uso colaborativo — Toda la familia',
+    body:`
+      <div style="padding-top:12px">
+        <p style="margin-bottom:10px">Padres e hijos pueden ver y gestionar el mismo tablero desde sus propios celulares.</p>
+        <div class="help-step"><div class="help-step-num">1</div><div class="help-step-text"><div class="help-step-title">El padre/madre crea el tablero</div>Inicio → "Nuevo tablero escolar" → completa los datos → Crear.</div></div>
+        <div class="help-step"><div class="help-step-num">2</div><div class="help-step-text"><div class="help-step-title">Compartir invitación inteligente</div>Toca el tablero → ⚙️ → "Compartir" → envía por WhatsApp. El token incluye toda la configuración Firebase — el familiar no necesita configurar nada.</div></div>
+        <div class="help-step"><div class="help-step-num">3</div><div class="help-step-text"><div class="help-step-title">El familiar se une</div>Abre EscolApp → configura su nombre → Inicio → "Unirse con código" → pega el token → ¡listo! El tablero aparece automáticamente con todos los datos.</div></div>
+        <div class="help-tip">
+          <div class="help-tip-title">💡 Token vs Código corto</div>
+          <strong>Token largo:</strong> incluye la configuración Firebase. La app se configura sola. Ideal para quien instala EscolApp por primera vez.<br><br>
+          <strong>Código corto (6 chars):</strong> solo funciona si el familiar ya tiene las mismas credenciales Firebase configuradas. Útil cuando todos en la familia ya usan la app.
+        </div>
+        <div class="help-tip"><div class="help-tip-title">💡 Roles disponibles</div>
+        <strong>🔑 Admin:</strong> crea, edita, elimina tarjetas y sincroniza Gmail. Invita miembros y cambia sus roles. Puede haber <strong>múltiples admins</strong> en un tablero.<br><br>
+        <strong>✏️ Colaborador:</strong> crea y edita tarjetas. Ideal para el otro padre/madre, o un estudiante mayor que gestiona sus propias tareas.<br><br>
+        <strong>👁️ Lector:</strong> solo ve el tablero y marca tarjetas como listas. Ideal para niños pequeños o familiares que quieren estar informados.<br><br>
+        <strong>Ejemplo práctico:</strong> En el tablero de Sofía (7 años), papá y mamá son admins. Sofía es colaboradora y puede mover sus tareas a "Listo". La abuela es lectora y ve el tablero sin modificarlo.
+      </div>
+      </div>`
+  },
+  {
+    icon:'📋', title:'Tipos de tablero',
+    body:`
+      <div style="padding-top:12px">
+        <div style="margin-bottom:14px">
+          <div style="font-size:14px;font-weight:700;color:var(--accent);margin-bottom:6px">📚 Tablero Escolar</div>
+          <p>Diseñado para las tareas de un hijo. Tiene sincronización con Gmail y Phidias. Las tarjetas se clasifican automáticamente con IA. Crea uno por cada hijo.</p>
+        </div>
+        <div>
+          <div style="font-size:14px;font-weight:700;color:var(--accent5);margin-bottom:6px">🟣 Tablero Libre</div>
+          <p>Sin vinculación a Gmail ni Phidias. Úsalo para tareas familiares, listas de mercado del colegio, seguimiento de pagos, o cualquier gestión que quieras manejar en Kanban. Tiene todas las funcionalidades Kanban y notificaciones.</p>
+        </div>
+      </div>`
+  },
+  {
+    icon:'📱', title:'Instalar como app en Android',
+    body:`
+      <div style="padding-top:12px">
+        <div class="help-step"><div class="help-step-num">1</div><div class="help-step-text"><div class="help-step-title">Abrir en Chrome</div>Abre el archivo escolapp.html en Chrome para Android.</div></div>
+        <div class="help-step"><div class="help-step-num">2</div><div class="help-step-text"><div class="help-step-title">Agregar a pantalla de inicio</div>Toca el menú <strong>⋮</strong> → <strong>"Agregar a pantalla de inicio"</strong> → Instalar.</div></div>
+        <div class="help-step"><div class="help-step-num">3</div><div class="help-step-text"><div class="help-step-title">Usar como app nativa</div>La app abre sin barra del navegador, con ícono propio en tu pantalla de inicio. Los datos se guardan localmente entre sesiones.</div></div>
+        <div class="help-tip"><div class="help-tip-title">💡 Compartir la app con la familia</div>Comparte el archivo escolapp.html por WhatsApp. Cada persona lo abre en Chrome y lo instala en su celular. Luego ingresan el código del tablero para conectarse.</div>
+      </div>`
+  },
+  {
+    icon:'🔒', title:'Privacidad y seguridad de tus datos',
+    body:`
+      <div style="padding-top:12px">
+        <p style="margin-bottom:12px">EscolApp está diseñado con privacidad por defecto:</p>
+        <div class="help-step"><div class="help-step-num">✓</div><div class="help-step-text"><div class="help-step-title">Datos en tu propio Firebase</div>Cada familia usa su propio proyecto Firebase bajo su cuenta de Google. Nadie más tiene acceso.</div></div>
+        <div class="help-step"><div class="help-step-num">✓</div><div class="help-step-text"><div class="help-step-title">Credenciales locales</div>Tu contraseña de Gmail, credenciales de Phidias y API keys se guardan solo en tu dispositivo. No viajan a ningún servidor externo.</div></div>
+        <div class="help-step"><div class="help-step-num">✓</div><div class="help-step-text"><div class="help-step-title">Sin servidor propio</div>Pollitos Apps no opera ningún servidor. La app funciona directamente entre tu dispositivo, Firebase y Gmail.</div></div>
+        <div class="help-tip"><div class="help-tip-title">⚠️ Recomendación</div>Usa una contraseña de aplicación de Gmail (no tu contraseña principal). Así puedes revocarla en cualquier momento sin cambiar tu contraseña real.</div>
+      </div>`
+  },
+];
+
+function renderHelp() {
+  const el = document.getElementById('helpContent');
+  el.innerHTML = HELP_ITEMS.map((item,i) => `
+    <div class="help-accordion" id="hacc${i}">
+      <div class="help-acc-header" onclick="toggleAcc(${i})">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="help-acc-icon">${item.icon}</div>
+          <span>${item.title}</span>
+        </div>
+        <div class="help-acc-arrow">⌄</div>
+      </div>
+      <div class="help-acc-body">${item.body}</div>
+    </div>
+  `).join('');
+}
+function toggleAcc(i) {
+  const el = document.getElementById('hacc'+i);
+  el.classList.toggle('open');
+}
+
+// ============================================================
+// DRAWER
+// ============================================================
+function showDrawer(title, html) {
+  document.getElementById('drawerTitle').textContent = title;
+  document.getElementById('drawerBody').innerHTML = html;
+  document.getElementById('overlay').classList.add('open');
+}
+function closeDrawer() {
+  document.getElementById('overlay').classList.remove('open');
+  S.editingCardId = null;
+}
+function closeOverlay(e) { if (e.target===document.getElementById('overlay')) closeDrawer(); }
+
+// ============================================================
+// PWA MANIFEST
+// ============================================================
+function injectPWA() {
+  const canvas = document.createElement('canvas');
+  canvas.width=192; canvas.height=192;
+  const ctx=canvas.getContext('2d');
+  const g=ctx.createLinearGradient(0,0,192,192);
+  g.addColorStop(0,'#3d9fff'); g.addColorStop(1,'#00e5a0');
+  ctx.fillStyle='#0f1923'; ctx.fillRect(0,0,192,192);
+  ctx.beginPath();
+  const r=42;
+  ctx.moveTo(r,0);ctx.lineTo(192-r,0);ctx.quadraticCurveTo(192,0,192,r);
+  ctx.lineTo(192,192-r);ctx.quadraticCurveTo(192,192,192-r,192);
+  ctx.lineTo(r,192);ctx.quadraticCurveTo(0,192,0,192-r);
+  ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);
+  ctx.closePath(); ctx.fillStyle=g; ctx.fill();
+  ctx.font='96px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('🎒',96,100);
+  const icon=canvas.toDataURL();
+  const mf={name:'EscolApp',short_name:'EscolApp',start_url:'.',display:'standalone',orientation:'portrait',background_color:'#0f1923',theme_color:'#0f1923',icons:[{src:icon,sizes:'192x192',type:'image/png'}]};
+  const blob=new Blob([JSON.stringify(mf)],{type:'application/json'});
+  const link=document.createElement('link');
+  link.rel='manifest'; link.href=URL.createObjectURL(blob);
+  document.head.appendChild(link);
+}
+
+// ============================================================
+// ANTI PULL-TO-REFRESH
+// ============================================================
+let _startY=0;
+document.addEventListener('touchstart',e=>{_startY=e.touches[0].clientY;},{passive:true});
+document.addEventListener('touchmove',e=>{
+  const el=e.target.closest('.screen,.drawer,.kanban-board,.kanban-filters,.sync-log');
+  if(!el||el.scrollTop===0){if(e.touches[0].clientY-_startY>0)e.preventDefault();}
+},{passive:false});
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  hydrate();
+  injectPWA();
+  renderWizDots();
+
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('hide');
+    if (S.configured) {
+      launchApp();
+    } else {
+      document.getElementById('setupWizard').classList.add('visible');
+    }
+  }, 2200);
+}
+
+init();
+</script>
+</body>
+</html>
