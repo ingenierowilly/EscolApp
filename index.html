@@ -7,6 +7,8 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#0f1923">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
 <meta name="description" content="EscolApp - Gestiona tus tareas escolares fácilmente">
 <title>EscolApp 🎒</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -2481,27 +2483,13 @@ function closeOverlay(e) { if (e.target===document.getElementById('overlay')) cl
 // PWA MANIFEST
 // ============================================================
 function injectPWA() {
-  const canvas = document.createElement('canvas');
-  canvas.width=192; canvas.height=192;
-  const ctx=canvas.getContext('2d');
-  const g=ctx.createLinearGradient(0,0,192,192);
-  g.addColorStop(0,'#3d9fff'); g.addColorStop(1,'#00e5a0');
-  ctx.fillStyle='#0f1923'; ctx.fillRect(0,0,192,192);
-  ctx.beginPath();
-  const r=42;
-  ctx.moveTo(r,0);ctx.lineTo(192-r,0);ctx.quadraticCurveTo(192,0,192,r);
-  ctx.lineTo(192,192-r);ctx.quadraticCurveTo(192,192,192-r,192);
-  ctx.lineTo(r,192);ctx.quadraticCurveTo(0,192,0,192-r);
-  ctx.lineTo(0,r);ctx.quadraticCurveTo(0,0,r,0);
-  ctx.closePath(); ctx.fillStyle=g; ctx.fill();
-  ctx.font='96px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('🎒',96,100);
-  const icon=canvas.toDataURL();
-  const mf={name:'EscolApp',short_name:'EscolApp',start_url:'.',display:'standalone',orientation:'portrait',background_color:'#0f1923',theme_color:'#0f1923',icons:[{src:icon,sizes:'192x192',type:'image/png'}]};
-  const blob=new Blob([JSON.stringify(mf)],{type:'application/json'});
-  const link=document.createElement('link');
-  link.rel='manifest'; link.href=URL.createObjectURL(blob);
-  document.head.appendChild(link);
+  // Manifest y íconos son archivos estáticos en el repositorio.
+  if (!document.querySelector('link[rel="manifest"]')) {
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = 'manifest.json';
+    document.head.appendChild(link);
+  }
 }
 
 // ============================================================
