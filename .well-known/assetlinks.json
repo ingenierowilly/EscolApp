@@ -1,0 +1,10 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.pollitosapps.escolapp",
+    "sha256_cert_fingerprints": [
+      "AF:C0:53:E8:03:23:DC:7B:6E:2B:93:2B:60:0E:37:D5:5D:D6:00:82:50:75:F1:16:12:21:E2:E4:09:40:40:56"
+    ]
+  }
+}]
