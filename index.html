@@ -41,12 +41,22 @@
   --safe-bottom: env(safe-area-inset-bottom, 0px);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body {
-  height: 100%; overflow: hidden;
+html {
   overscroll-behavior: none;
+  overflow: hidden;
+  height: 100%;
+}
+body {
+  overscroll-behavior: none;
+  overflow: hidden;
+  touch-action: pan-x pan-y;
+  height: 100%;
+  height: 100dvh;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg); color: var(--text);
+  display: flex; flex-direction: column;
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
-  touch-action: manipulation;
 }
 body {
   font-family: 'DM Sans', sans-serif;
@@ -2505,34 +2515,8 @@ function injectPWA() {
 // ============================================================
 // ANTI PULL-TO-REFRESH
 // ============================================================
-let _startY=0;
-document.addEventListener('touchstart', e => {
-  _startY = e.touches[0].clientY;
-}, { passive: true });
-
-document.addEventListener('touchmove', e => {
-  // Contenedores con scroll propio — dejarlos hacer scroll libremente
-  const scrollable = e.target.closest(
-    '.screen, .drawer, .kanban-board, .kanban-filters, .sync-log, #setupWizard'
-  );
-
-  if (!scrollable) {
-    // Fuera de cualquier contenedor scrollable → bloquear pull-to-refresh
-    if (e.touches[0].clientY - _startY > 0) e.preventDefault();
-    return;
-  }
-
-  const atTop    = scrollable.scrollTop <= 0;
-  const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
-  const goingDown = e.touches[0].clientY - _startY < 0;
-  const goingUp   = e.touches[0].clientY - _startY > 0;
-
-  // Bloquear solo si está en el tope y el usuario arrastra hacia abajo (pull-to-refresh)
-  if (atTop && goingUp) e.preventDefault();
-  // Bloquear si está al final y arrastra hacia arriba (rebote)
-  if (atBottom && goingDown) e.preventDefault();
-
-}, { passive: false });
+// Anti pull-to-refresh: manejado por CSS (overscroll-behavior)
+// No usamos touchmove preventDefault() porque causa problemas de scroll en Android
 
 // ============================================================
 // INIT
