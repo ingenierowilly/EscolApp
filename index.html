@@ -94,7 +94,11 @@ body {
   display: none;
   flex-direction: column;
   overflow-y: auto;
-  padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 20px);
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  padding: calc(var(--safe-top) + 20px) 20px calc(var(--safe-bottom) + 80px);
 }
 #setupWizard.visible { display: flex; }
 .wizard-header {
@@ -197,8 +201,14 @@ body {
 .badge-dot.show { display: block; }
 
 #main { flex: 1; overflow: hidden; position: relative; }
-.screen { position:absolute; inset:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; display:none; }
-.screen.active { display:block; }
+.screen {
+  position: absolute; inset: 0;
+  overflow-y: auto; overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: none;
+}
+.screen.active { display: block; }
 
 /* ============================================================
    BOTTOM NAV
@@ -2496,11 +2506,33 @@ function injectPWA() {
 // ANTI PULL-TO-REFRESH
 // ============================================================
 let _startY=0;
-document.addEventListener('touchstart',e=>{_startY=e.touches[0].clientY;},{passive:true});
-document.addEventListener('touchmove',e=>{
-  const el=e.target.closest('.screen,.drawer,.kanban-board,.kanban-filters,.sync-log');
-  if(!el||el.scrollTop===0){if(e.touches[0].clientY-_startY>0)e.preventDefault();}
-},{passive:false});
+document.addEventListener('touchstart', e => {
+  _startY = e.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener('touchmove', e => {
+  // Contenedores con scroll propio — dejarlos hacer scroll libremente
+  const scrollable = e.target.closest(
+    '.screen, .drawer, .kanban-board, .kanban-filters, .sync-log, #setupWizard'
+  );
+
+  if (!scrollable) {
+    // Fuera de cualquier contenedor scrollable → bloquear pull-to-refresh
+    if (e.touches[0].clientY - _startY > 0) e.preventDefault();
+    return;
+  }
+
+  const atTop    = scrollable.scrollTop <= 0;
+  const atBottom = scrollable.scrollTop + scrollable.clientHeight >= scrollable.scrollHeight - 1;
+  const goingDown = e.touches[0].clientY - _startY < 0;
+  const goingUp   = e.touches[0].clientY - _startY > 0;
+
+  // Bloquear solo si está en el tope y el usuario arrastra hacia abajo (pull-to-refresh)
+  if (atTop && goingUp) e.preventDefault();
+  // Bloquear si está al final y arrastra hacia arriba (rebote)
+  if (atBottom && goingDown) e.preventDefault();
+
+}, { passive: false });
 
 // ============================================================
 // INIT
